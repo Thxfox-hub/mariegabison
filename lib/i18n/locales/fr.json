@@ -4,7 +4,8 @@
     "login": "Connexion",
     "help": "Aide",
     "bag": "Panier",
-    "home": "Accueil"
+    "home": "Accueil",
+    "back": "Retour"
   },
   "menu": {
     "collections": "COLLECTIONS"

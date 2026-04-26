@@ -4,7 +4,8 @@
     "login": "Log in",
     "help": "Help",
     "bag": "Shopping bag",
-    "home": "Home"
+    "home": "Home",
+    "back": "Back"
   },
   "menu": {
     "collections": "COLLECTIONS"

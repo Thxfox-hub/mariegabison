@@ -1,11 +1,13 @@
 /**
  * Header.jsx - Marie Gabison Bijoux
  * Ultra-minimal Zara-style header with language switcher
+ * Shows back arrow on product pages, menu icon otherwise
  */
 "use client";
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
 import { useTranslation } from '../lib/i18n/context';
 
 export default function Header({ cartCount = 0, onCartClick, onMenuClick, onLoginClick, onHelpClick }) {
@@ -13,6 +15,9 @@ export default function Header({ cartCount = 0, onCartClick, onMenuClick, onLogi
   const [mounted, setMounted] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
   const langRef = useRef(null);
+  const pathname = usePathname();
+  const router = useRouter();
+  const isProductPage = pathname?.startsWith('/product/');
 
   useEffect(() => {
     setMounted(true);
@@ -31,17 +36,29 @@ export default function Header({ cartCount = 0, onCartClick, onMenuClick, onLogi
   return (
     <header className="site-header">
       <div className="header-inner">
-        {/* Left: Menu icon */}
+        {/* Left: Back arrow on product pages, Menu icon otherwise */}
         <div className="header-left">
-          <button
-            className="header-icon-btn"
-            onClick={onMenuClick}
-            aria-label={t('nav.menu')}
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M3 6h18M3 18h18"/>
-            </svg>
-          </button>
+          {isProductPage ? (
+            <button
+              className="header-icon-btn"
+              onClick={() => router.back()}
+              aria-label={t('nav.back')}
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M15 18l-6-6 6-6"/>
+              </svg>
+            </button>
+          ) : (
+            <button
+              className="header-icon-btn"
+              onClick={onMenuClick}
+              aria-label={t('nav.menu')}
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M3 6h18M3 18h18"/>
+              </svg>
+            </button>
+          )}
         </div>
 
         {/* Center: Logo */}
