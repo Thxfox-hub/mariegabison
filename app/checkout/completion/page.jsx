@@ -2,9 +2,12 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { useTranslation } from "../../../lib/i18n/context";
+
 function CompletionInner() {
   const [status, setStatus] = useState();
   const searchParams = useSearchParams();
+  const { t } = useTranslation();
 
   useEffect(() => {
     const sessionId = searchParams ? searchParams.get("session_id") : null;
@@ -59,17 +62,17 @@ function CompletionInner() {
             )}
           </div>
           <h2 style={{ textAlign: "center", marginTop: 0 }}>
-            {status === "success" && "Payment Successful!"}
-            {status === "failure" && "Payment Failed"}
-            {status === "processing" && "Payment Processing"}
+            {status === "success" && t('completion.success')}
+            {status === "failure" && t('completion.failed')}
+            {status === "processing" && t('completion.processing')}
           </h2>
           <p className="text-muted-foreground" style={{ textAlign: "center" }}>
-            {status === "success" && "Thank you for your order. You will receive a confirmation email shortly."}
-            {status === "failure" && "There was an issue processing your payment. Please try again."}
-            {status === "processing" && "Your payment is being processed. We'll update you once it's complete."}
+            {status === "success" && t('completion.successDesc')}
+            {status === "failure" && t('completion.failedDesc')}
+            {status === "processing" && t('completion.processingDesc')}
           </p>
           <div style={{ display: "flex", justifyContent: "center", marginTop: 16 }}>
-            <a className="btn" href="/">Return to Shop</a>
+            <a className="btn" href="/">{t('completion.returnToShop')}</a>
           </div>
         </div>
       </div>

@@ -6,6 +6,9 @@
     "bag": "Carrello",
     "home": "Home"
   },
+  "menu": {
+    "collections": "COLLEZIONI"
+  },
   "categories": {
     "all": "TUTTO",
     "femme": "DONNA",

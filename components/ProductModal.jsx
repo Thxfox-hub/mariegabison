@@ -1,11 +1,13 @@
 "use client";
 
 import * as Dialog from "@radix-ui/react-dialog";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "./CartProvider";
+import { useTranslation } from '../lib/i18n/context';
 
 export default function ProductModal({ item, onClose, instagramUrl = "https://www.instagram.com/maisonmariegabison/" }) {
+  const { t, lang } = useTranslation();
   // Neutral placeholder SVG
   const placeholder =
     'data:image/svg+xml;utf8,' +
@@ -26,7 +28,7 @@ export default function ProductModal({ item, onClose, instagramUrl = "https://ww
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
 
-  const fmt = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' });
+  const fmt = useMemo(() => new Intl.NumberFormat(lang === 'en' ? 'en-US' : lang === 'ru' ? 'ru-RU' : lang === 'it' ? 'it-IT' : 'fr-FR', { style: 'currency', currency: 'EUR' }), [lang]);
   const priceText = Number.isFinite(Number(price)) ? fmt.format(Number(price)) : '—';
 
   const handleAdd = () => {
@@ -47,12 +49,12 @@ export default function ProductModal({ item, onClose, instagramUrl = "https://ww
         <Dialog.Overlay className="fixed inset-0 bg-black/50 z-[200]" />
         <Dialog.Content
           className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white border border-[var(--border)] w-[92vw] max-w-[960px] max-h-[90vh] overflow-auto p-0 shadow-[0_10px_30px_rgba(0,0,0,0.15)] z-[201]"
-          aria-label={title || 'Détail du produit'}
+          aria-label={title || t('product.notFound')}
         >
           <div className="modal-header">
             <Dialog.Title className="modal-title">{title}</Dialog.Title>
             <Dialog.Close asChild>
-              <button className="modal-close" aria-label="Fermer">Fermer</button>
+              <button className="modal-close" aria-label={t('cart.close')}>{t('cart.close')}</button>
             </Dialog.Close>
           </div>
           <div className="modal-body">
@@ -71,15 +73,15 @@ export default function ProductModal({ item, onClose, instagramUrl = "https://ww
               <p style={{ fontWeight: 600 }}>{priceText}</p>
 
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', margin: '8px 0' }}>
-                <label className="sr-only" htmlFor="qty">Quantité</label>
+                <label className="sr-only" htmlFor="qty">{t('product.quantity')}</label>
                 <input id="qty" className="input" type="number" min={1} value={qty} onChange={(e) => setQty(Number(e.target.value) || 1)} style={{ width: 100 }} />
-                {added && <span className="status" style={{ margin: 0 }}>Ajouté ✔</span>}
+                {added && <span className="status" style={{ margin: 0 }}>{t('product.added')}</span>}
               </div>
 
               <div className="modal-actions">
-                <button className="btn primary" onClick={handleAdd}>Ajouter au panier</button>
-                <button className="btn" onClick={handleBuyNow}>Acheter maintenant</button>
-                <a className="btn" href={instagramUrl} target="_blank" rel="noreferrer noopener">Contacter sur Instagram</a>
+                <button className="btn primary" onClick={handleAdd}>{t('product.addToCart')}</button>
+                <button className="btn" onClick={handleBuyNow}>{t('product.buyNow')}</button>
+                <a className="btn" href={instagramUrl} target="_blank" rel="noreferrer noopener">{t('product.contactInstagram')}</a>
               </div>
             </div>
           </div>

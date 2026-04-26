@@ -46,6 +46,13 @@ export function I18nProvider({ children }) {
     } catch {}
   }, []);
 
+  // Sync <html lang> with current locale
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = lang;
+    }
+  }, [lang]);
+
   const setLang = useCallback((newLang) => {
     if (!SUPPORTED.includes(newLang)) return;
     setLangState(newLang);

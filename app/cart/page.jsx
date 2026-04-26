@@ -25,7 +25,7 @@ export default function CartPage() {
   const [suggestions, setSuggestions] = useState([]);
   const [suggesting, setSuggesting] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState(null);
-  const GEOAPIFY_API_KEY = "58e1c77c24c64f209255c5221fa986e0";
+  const GEOAPIFY_API_KEY = process.env.NEXT_PUBLIC_GEOAPIFY_KEY || "";
 
   // International dialing codes for phone prefix
   const dialMap = { FR: '33', BE: '32', DE: '49', ES: '34', IT: '39', NL: '31', GB: '44', US: '1' };

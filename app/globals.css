@@ -320,20 +320,7 @@ body{
 }
 .menu-collection-link:hover{opacity:0.6}
 
-/* ===== MODAL ===== */
-.modal-backdrop{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,0);
-  z-index:200;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  transition:background 0.3s ease;
-}
-.modal-backdrop.active{
-  background:rgba(0,0,0,0.5);
-}
+/* ===== MODAL (legacy, kept for ProductModal) ===== */
 .modal-panel{
   background:#fff;
   width:90%;
@@ -347,30 +334,6 @@ body{
 .modal-panel.active{
   transform:scale(1);
   opacity:1;
-}
-.modal-header{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:20px 24px;
-  border-bottom:1px solid var(--border);
-}
-.modal-title{
-  font-size:12px;
-  font-weight:600;
-  letter-spacing:0.1em;
-  margin:0;
-}
-.modal-close{
-  background:none;
-  border:none;
-  cursor:pointer;
-  padding:0;
-  color:var(--text);
-}
-.modal-close:hover{opacity:0.6}
-.modal-body{
-  padding:24px;
 }
 .form-group{
   margin-bottom:16px;
@@ -728,15 +691,15 @@ body{
   font-size:12px;
 }
 
-/* ===== MODAL ===== */
+/* ===== MODAL (full-width product detail) ===== */
 .modal-backdrop{
   position:fixed;
   inset:0;
   background:rgba(0,0,0,0);
+  z-index:200;
   display:flex;
   align-items:center;
   justify-content:center;
-  z-index:100;
   transition:background .25s ease;
 }
 .modal-backdrop.active{

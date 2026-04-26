@@ -6,6 +6,9 @@
     "bag": "Корзина",
     "home": "Главная"
   },
+  "menu": {
+    "collections": "КОЛЛЕКЦИИ"
+  },
   "categories": {
     "all": "ВСЕ",
     "femme": "ЖЕНЩИНЫ",

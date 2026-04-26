@@ -1,19 +1,36 @@
 /**
  * MenuOverlay.jsx - Slide-in menu panel with i18n
- * Animated menu with categories and collections
+ * Animated menu with dynamic categories from GAS data
  */
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useTranslation } from '../lib/i18n/context';
+import { useCart } from './CartProvider';
 
-const CATEGORY_IDS = ['femme', 'homme', 'collection'];
-const COLLECTION_IDS = ['NOUVEAUTÉS', 'COLLIERS', "BOUCLES D'OREILLES", 'BRACELETS', 'BAGUES', 'PARURES'];
+const CATEGORY_IDS = ['all', 'femme', 'homme'];
 
-export default function MenuOverlay({ open, onClose, onSelectCategory }) {
+export default function MenuOverlay({ open, onClose }) {
   const { t } = useTranslation();
+  const { items } = useCart();
   const [isVisible, setIsVisible] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
+
+  // Extract dynamic product categories from cart items (which mirror catalog)
+  const productCategories = useMemo(() => {
+    try {
+      const cached = localStorage.getItem('mariegabison_catalog');
+      if (cached) {
+        const arr = JSON.parse(cached);
+        if (Array.isArray(arr)) {
+          const cats = [...new Set(arr.map(it => it.category).filter(Boolean))];
+          return cats;
+        }
+      }
+    } catch {}
+    return ['Collier', 'Bracelet', "Boucles d'oreille", 'Bague', 'Parure'];
+  }, []);
 
   useEffect(() => {
     if (open) {
@@ -50,27 +67,29 @@ export default function MenuOverlay({ open, onClose, onSelectCategory }) {
           {/* Main categories */}
           <div className="menu-main">
             {CATEGORY_IDS.map((cat) => (
-              <button
+              <Link
                 key={cat}
+                href={`/?cat=${cat}`}
                 className="menu-main-link"
-                onClick={() => { onSelectCategory?.(cat); handleClose(); }}
+                onClick={handleClose}
               >
                 {t(`categories.${cat}`)}
-              </button>
+              </Link>
             ))}
           </div>
 
-          {/* Collections */}
+          {/* Product type categories from GAS */}
           <div className="menu-collections">
-            <div className="menu-section-title">COLLECTIONS</div>
-            {COLLECTION_IDS.map((col) => (
-              <button
-                key={col}
+            <div className="menu-section-title">{t('menu.collections')}</div>
+            {productCategories.map((cat) => (
+              <Link
+                key={cat}
+                href={`/?cat=${encodeURIComponent(cat)}`}
                 className="menu-collection-link"
-                onClick={() => { onSelectCategory?.(col); handleClose(); }}
+                onClick={handleClose}
               >
-                {col}
-              </button>
+                {t(`categories.${cat}`) || cat}
+              </Link>
             ))}
           </div>
         </div>

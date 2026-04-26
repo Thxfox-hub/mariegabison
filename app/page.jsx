@@ -14,6 +14,7 @@ export default function HomePage() {
   const [status, setStatus] = useState('loading');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [sortBy, setSortBy] = useState('alpha');
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const controller = new AbortController();
@@ -63,6 +64,14 @@ export default function HomePage() {
   // Sort & filter items
   const sortedItems = useMemo(() => {
     let arr = selectedCategory === 'all' ? [...items] : items.filter(it => it.category === selectedCategory);
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      arr = arr.filter(it =>
+        (it.title || '').toLowerCase().includes(q) ||
+        (it.description || '').toLowerCase().includes(q) ||
+        (it.category || '').toLowerCase().includes(q)
+      );
+    }
     if (sortBy === 'alpha') {
       arr.sort((a, b) => (a.title || '').localeCompare(b.title || '', 'fr'));
     } else if (sortBy === 'price-asc') {
@@ -71,7 +80,7 @@ export default function HomePage() {
       arr.sort((a, b) => (Number(b.price) || 0) - (Number(a.price) || 0));
     }
     return arr;
-  }, [items, sortBy, selectedCategory]);
+  }, [items, sortBy, selectedCategory, searchQuery]);
 
   return (
     <>
@@ -101,7 +110,8 @@ export default function HomePage() {
           type="text" 
           className="search-input" 
           placeholder={t('search.placeholder')}
-          readOnly
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
         />
       </div>
 

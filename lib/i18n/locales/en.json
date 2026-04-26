@@ -6,6 +6,9 @@
     "bag": "Shopping bag",
     "home": "Home"
   },
+  "menu": {
+    "collections": "COLLECTIONS"
+  },
   "categories": {
     "all": "ALL",
     "femme": "WOMEN",

@@ -6,6 +6,9 @@
     "bag": "Panier",
     "home": "Accueil"
   },
+  "menu": {
+    "collections": "COLLECTIONS"
+  },
   "categories": {
     "all": "TOUT",
     "femme": "FEMME",
