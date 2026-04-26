@@ -25,7 +25,8 @@
   },
   "search": {
     "placeholder": "ЧТО ВЫ ИЩЕТЕ?",
-    "sectionTitle": "ВАС МОЖЕТ ЗАИНТЕРЕСОВАТЬ"
+    "sectionTitle": "ВАМ МОЖЕТ ПОНРАВИТЬСЯ",
+    "noResults": "Ничего не найдено."
   },
   "sort": {
     "az": "А-Я",

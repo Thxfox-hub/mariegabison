@@ -6,6 +6,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import ProductCard from '../components/ProductCard';
+import SkeletonCard from '../components/SkeletonCard';
 import { useTranslation } from '../lib/i18n/context';
 
 export default function HomePage() {
@@ -143,28 +144,37 @@ export default function HomePage() {
       <main>
         {/* Loading State */}
         {status === 'loading' && (
-          <div className="loading-container">
-            <div className="loading-spinner" />
+          <div className="product-grid">
+            {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
           </div>
         )}
 
         {/* Error State */}
         {status === 'error' && (
-          <div className="status error">
-            {t('errors.loadItems')}
+          <div className="status error" style={{ textAlign: 'center', padding: '40px 0' }}>
+            <p>{t('errors.loadItems')}</p>
+            <button className="btn" style={{ marginTop: 12 }} onClick={() => { setStatus('loading'); window.location.reload(); }}>
+              ↻
+            </button>
           </div>
         )}
 
         {/* Products Grid */}
         {status === 'ready' && (
-          <div className="product-grid">
-            {sortedItems.map((it) => (
-              <ProductCard 
-                key={it.id || it.title} 
-                item={it} 
-              />
-            ))}
-          </div>
+          sortedItems.length > 0 ? (
+            <div className="product-grid">
+              {sortedItems.map((it) => (
+                <ProductCard 
+                  key={it.id || it.title} 
+                  item={it} 
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="status" style={{ textAlign: 'center', padding: '40px 0' }}>
+              {t('search.noResults')}
+            </div>
+          )
         )}
       </main>
     </>

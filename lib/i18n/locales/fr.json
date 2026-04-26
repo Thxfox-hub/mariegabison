@@ -25,7 +25,8 @@
   },
   "search": {
     "placeholder": "QUE RECHERCHEZ-VOUS ?",
-    "sectionTitle": "POURRAIT VOUS INTÉRESSER"
+    "sectionTitle": "POURRAIT VOUS INTÉRESSER",
+    "noResults": "Aucun article trouvé."
   },
   "sort": {
     "az": "A-Z",

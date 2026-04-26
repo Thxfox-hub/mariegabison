@@ -45,7 +45,7 @@ function CompletionInner() {
   if (!status) {
     return (
       <div className="container" style={{ minHeight: "60vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div>Loading...</div>
+        <div className="loading-spinner" />
       </div>
     );
   }
@@ -84,7 +84,7 @@ export default function CompletionPage() {
   return (
     <Suspense fallback={
       <div className="container" style={{ minHeight: "60vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div>Loading...</div>
+        <div className="loading-spinner" />
       </div>
     }>
       <CompletionInner />

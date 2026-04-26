@@ -25,7 +25,8 @@
   },
   "search": {
     "placeholder": "WHAT ARE YOU LOOKING FOR?",
-    "sectionTitle": "YOU MIGHT BE INTERESTED IN"
+    "sectionTitle": "YOU MIGHT LIKE",
+    "noResults": "No items found."
   },
   "sort": {
     "az": "A-Z",
