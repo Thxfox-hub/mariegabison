@@ -1,0 +1,157 @@
+{
+  "nav": {
+    "menu": "Menu",
+    "login": "Accedi",
+    "help": "Aiuto",
+    "bag": "Carrello",
+    "home": "Home"
+  },
+  "categories": {
+    "femme": "DONNA",
+    "homme": "UOMO",
+    "collection": "COLLEZIONE"
+  },
+  "search": {
+    "placeholder": "COSA STAI CERCANDO?",
+    "sectionTitle": "POTREBBE INTERESSARTI"
+  },
+  "sort": {
+    "az": "A-Z",
+    "priceAsc": "Prezzo ↑",
+    "priceDesc": "Prezzo ↓"
+  },
+  "product": {
+    "quantity": "Quantità",
+    "addToCart": "Aggiungi al carrello",
+    "buyNow": "Acquista ora",
+    "contactInstagram": "Contatta su Instagram",
+    "backToShop": "← Torna al negozio",
+    "notFound": "Prodotto non trovato",
+    "notFoundDesc": "Questo articolo non esiste o è stato rimosso.",
+    "added": "Aggiunto ✔",
+    "decrease": "Diminuisci",
+    "increase": "Aumenta"
+  },
+  "cart": {
+    "title": "Il tuo carrello",
+    "empty": "Il tuo carrello è vuoto.",
+    "total": "Totale",
+    "clear": "Svuota",
+    "bookAppointment": "Prenota appuntamento",
+    "checkout": "Procedi all'acquisto",
+    "remove": "Rimuovi",
+    "close": "Chiudi",
+    "loading": "Caricamento carrello…"
+  },
+  "checkout": {
+    "title": "Completa l'ordine",
+    "contact": "Dati di contatto",
+    "name": "Nome e cognome (obbligatorio)",
+    "email": "Email (opzionale)",
+    "phone": "Telefono (obbligatorio)",
+    "address": "Indirizzo di spedizione",
+    "addressPlaceholder": "Inizia a digitare il tuo indirizzo",
+    "city": "Città",
+    "state": "Stato/Regione",
+    "postalCode": "CAP",
+    "country": "Paese",
+    "delivery": "Spedizione",
+    "calculating": "(calcolo…)",
+    "estimatedTotal": "Totale stimato",
+    "subtotal": "Subtotale",
+    "shipping": "Spedizione",
+    "summary": "Riepilogo",
+    "copySummary": "Copia riepilogo",
+    "copied": "Copiato!",
+    "confirm": "Conferma",
+    "sendBot": "Invia via bot",
+    "sending": "Invio…",
+    "sent": "Inviato ✔",
+    "payNow": "Paga ora",
+    "redirecting": "Reindirizzamento…",
+    "payUnavailable": "Pagamento non disponibile",
+    "namePhoneRequired": "Nome e telefono sono obbligatori per confermare.",
+    "namePhoneAddrRequired": "Nome, telefono e un indirizzo completo (seleziona un suggerimento) sono obbligatori.",
+    "noAccountNeeded": "Nessuna registrazione richiesta. Compila i tuoi dati. Il tuo indirizzo sarà precompilato al prossimo ordine.",
+    "selectedShipping": "Opzione di spedizione selezionata",
+    "estimatedDelivery": "Consegna stimata",
+    "continueShopping": "Continua gli acquisti",
+    "searching": "Ricerca…"
+  },
+  "appointment": {
+    "title": "Prenota appuntamento",
+    "intro": "Un messaggio sarà generato automaticamente con il contenuto del tuo carrello. Puoi copiarlo e scriverci su Instagram.",
+    "name": "Il tuo nome (opzionale)",
+    "phone": "Telefono (opzionale)",
+    "email": "Email (opzionale)",
+    "copyMessage": "Copia messaggio",
+    "openInstagram": "Apri Instagram",
+    "afterSend": "Dopo aver inviato il messaggio, ti contatteremo per confermare data e ora dell'appuntamento.",
+    "emptyCart": "(Carrello vuoto)",
+    "greeting": "Buongiorno, vorrei prenotare un appuntamento per questi articoli:",
+    "estimatedTotal": "Totale stimato",
+    "thanks": "Grazie!",
+    "sendFailed": "Invio fallito"
+  },
+  "help": {
+    "title": "AIUTO",
+    "needMore": "Hai bisogno di altro aiuto?",
+    "contactInstagram": "Contattaci su Instagram",
+    "faq": [
+      { "q": "Come fare un ordine?", "a": "Contattaci su Instagram per effettuare un ordine." },
+      { "q": "Quali sono i tempi di consegna?", "a": "I gioielli sono fatti a mano, calcola 1-2 settimane." },
+      { "q": "Posso restituire un articolo?", "a": "Sì, entro 14 giorni se l'articolo è intatto." },
+      { "q": "Come curare i miei gioielli?", "a": "Evita acqua e profumi, conservali nella loro bustina." }
+    ]
+  },
+  "login": {
+    "title": "ACCEDI",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Accedi",
+    "noAccount": "Non hai un account?",
+    "createAccount": "Crea un account"
+  },
+  "footer": {
+    "brand": "Gioielli fatti a mano a Parigi",
+    "contact": "Contatti",
+    "followUs": "Seguici",
+    "rights": "Marie Gabison"
+  },
+  "errors": {
+    "loadItems": "Impossibile caricare gli articoli.",
+    "sendFailed": "Invio fallito",
+    "missingWeight": "Peso mancante per"
+  },
+  "completion": {
+    "success": "Pagamento confermato",
+    "successDesc": "Grazie per il tuo ordine! Riceverai un'email di conferma.",
+    "processing": "Pagamento in elaborazione",
+    "processingDesc": "Il tuo pagamento è in fase di elaborazione. Attendere…",
+    "failed": "Pagamento fallito",
+    "failedDesc": "Il pagamento non è stato elaborato. Riprova.",
+    "returnToShop": "Torna al negozio"
+  },
+  "canceled": {
+    "title": "Ordine annullato",
+    "desc": "Il tuo ordine è stato annullato. Nessun importo è stato addebitato.",
+    "returnToShop": "Torna al negozio"
+  },
+  "countries": {
+    "FR": "Francia",
+    "BE": "Belgio",
+    "DE": "Germania",
+    "ES": "Spagna",
+    "IT": "Italia",
+    "NL": "Paesi Bassi",
+    "GB": "Regno Unito",
+    "US": "Stati Uniti",
+    "RU": "Russia"
+  },
+  "lang": {
+    "fr": "Français",
+    "en": "English",
+    "ru": "Русский",
+    "it": "Italiano"
+  }
+}

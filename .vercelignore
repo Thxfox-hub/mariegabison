@@ -1,0 +1,4 @@
+# Ignore local files on Vercel
+.env.local
+node_modules
+.next

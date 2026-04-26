@@ -1,0 +1,157 @@
+{
+  "nav": {
+    "menu": "Menu",
+    "login": "Log in",
+    "help": "Help",
+    "bag": "Shopping bag",
+    "home": "Home"
+  },
+  "categories": {
+    "femme": "WOMEN",
+    "homme": "MEN",
+    "collection": "COLLECTION"
+  },
+  "search": {
+    "placeholder": "WHAT ARE YOU LOOKING FOR?",
+    "sectionTitle": "YOU MIGHT BE INTERESTED IN"
+  },
+  "sort": {
+    "az": "A-Z",
+    "priceAsc": "Price ↑",
+    "priceDesc": "Price ↓"
+  },
+  "product": {
+    "quantity": "Quantity",
+    "addToCart": "Add to cart",
+    "buyNow": "Buy now",
+    "contactInstagram": "Contact on Instagram",
+    "backToShop": "← Back to shop",
+    "notFound": "Product not found",
+    "notFoundDesc": "This item does not exist or has been removed.",
+    "added": "Added ✔",
+    "decrease": "Decrease",
+    "increase": "Increase"
+  },
+  "cart": {
+    "title": "Your cart",
+    "empty": "Your cart is empty.",
+    "total": "Total",
+    "clear": "Clear",
+    "bookAppointment": "Book appointment",
+    "checkout": "Checkout",
+    "remove": "Remove",
+    "close": "Close",
+    "loading": "Loading cart…"
+  },
+  "checkout": {
+    "title": "Complete your order",
+    "contact": "Contact details",
+    "name": "Full name (required)",
+    "email": "Email (optional)",
+    "phone": "Phone (required)",
+    "address": "Shipping address",
+    "addressPlaceholder": "Start typing your address",
+    "city": "City",
+    "state": "State/Region",
+    "postalCode": "Postal Code",
+    "country": "Country",
+    "delivery": "Delivery",
+    "calculating": "(calculating…)",
+    "estimatedTotal": "Estimated total",
+    "subtotal": "Subtotal",
+    "shipping": "Shipping",
+    "summary": "Summary",
+    "copySummary": "Copy summary",
+    "copied": "Copied!",
+    "confirm": "Confirm",
+    "sendBot": "Send via bot",
+    "sending": "Sending…",
+    "sent": "Sent ✔",
+    "payNow": "Pay now",
+    "redirecting": "Redirecting…",
+    "payUnavailable": "Payment unavailable",
+    "namePhoneRequired": "Name and phone are required to confirm.",
+    "namePhoneAddrRequired": "Name, phone and a complete address (select a suggestion) are required.",
+    "noAccountNeeded": "No account required. Fill in your details. Your address will be pre-filled on your next order.",
+    "selectedShipping": "Selected shipping option",
+    "estimatedDelivery": "Estimated delivery",
+    "continueShopping": "Continue shopping",
+    "searching": "Searching…"
+  },
+  "appointment": {
+    "title": "Book appointment",
+    "intro": "A message will be automatically generated with your cart contents. You can copy it and message us on Instagram.",
+    "name": "Your name (optional)",
+    "phone": "Phone (optional)",
+    "email": "Email (optional)",
+    "copyMessage": "Copy message",
+    "openInstagram": "Open Instagram",
+    "afterSend": "After sending your message, we will contact you to confirm the date and time of the appointment.",
+    "emptyCart": "(Empty cart)",
+    "greeting": "Hello, I would like to book an appointment for these items:",
+    "estimatedTotal": "Estimated total",
+    "thanks": "Thank you!",
+    "sendFailed": "Send failed"
+  },
+  "help": {
+    "title": "HELP",
+    "needMore": "Need more help?",
+    "contactInstagram": "Contact us on Instagram",
+    "faq": [
+      { "q": "How to place an order?", "a": "Contact us via Instagram to place an order." },
+      { "q": "What are the delivery times?", "a": "Jewelry is handmade, allow 1 to 2 weeks." },
+      { "q": "Can I return an item?", "a": "Yes, within 14 days if the item is intact." },
+      { "q": "How to care for my jewelry?", "a": "Avoid water and perfumes, store them in their pouch." }
+    ]
+  },
+  "login": {
+    "title": "LOG IN",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Log in",
+    "noAccount": "Don't have an account?",
+    "createAccount": "Create an account"
+  },
+  "footer": {
+    "brand": "Handmade jewelry in Paris",
+    "contact": "Contact",
+    "followUs": "Follow us",
+    "rights": "Marie Gabison"
+  },
+  "errors": {
+    "loadItems": "Unable to load items.",
+    "sendFailed": "Send failed",
+    "missingWeight": "Missing weight for"
+  },
+  "completion": {
+    "success": "Payment confirmed",
+    "successDesc": "Thank you for your order! You will receive a confirmation email.",
+    "processing": "Payment processing",
+    "processingDesc": "Your payment is being processed. Please wait…",
+    "failed": "Payment failed",
+    "failedDesc": "The payment could not be processed. Please try again.",
+    "returnToShop": "Return to shop"
+  },
+  "canceled": {
+    "title": "Order canceled",
+    "desc": "Your order has been canceled. No amount has been charged.",
+    "returnToShop": "Return to shop"
+  },
+  "countries": {
+    "FR": "France",
+    "BE": "Belgium",
+    "DE": "Germany",
+    "ES": "Spain",
+    "IT": "Italy",
+    "NL": "Netherlands",
+    "GB": "United Kingdom",
+    "US": "United States",
+    "RU": "Russia"
+  },
+  "lang": {
+    "fr": "Français",
+    "en": "English",
+    "ru": "Русский",
+    "it": "Italiano"
+  }
+}

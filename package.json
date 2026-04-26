@@ -1,0 +1,28 @@
+{
+  "name": "mariegabison",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@radix-ui/react-dialog": "^1.0.5",
+    "@stripe/react-stripe-js": "^4.0.2",
+    "@stripe/stripe-js": "^7.9.0",
+    "clsx": "^2.1.1",
+    "next": "^14.2.32",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "stripe": "^18.5.0",
+    "tailwind-merge": "^2.3.0"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.19",
+    "postcss": "^8.4.41",
+    "tailwindcss": "^3.4.10"
+  }
+}
