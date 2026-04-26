@@ -192,6 +192,8 @@ function normalizeCategory_(raw) {
  *  - URL directe (http/https) → retournée telle quelle
  *  - ID Google Drive (ex: 1AbC...xyz) → converti en lien de visualisation
  *  - Lien drive.google.com/file/d/XXXX/ → extrait l'ID et convertit
+ *  - Chemin AppSheet (ex: "Feuille 1_Images/Ntm.collier_image.191210.jpg")
+ *    → cherche le fichier dans le dossier parent du spreadsheet et retourne l'URL publique
  */
 function resolveImage_(v) {
   if (!isFilled_(v)) return '';
@@ -212,8 +214,110 @@ function resolveImage_(v) {
     return 'https://lh3.googleusercontent.com/d/' + s;
   }
 
-  // Sinon retourner tel quel (peut-être un chemin relatif ou autre)
+  // Chemin AppSheet (ex: "Feuille 1_Images/Ntm.collier_image.191210.jpg")
+  // → chercher le fichier dans Google Drive et retourner l'URL publique
+  if (s.indexOf('/') !== -1 || s.indexOf('\\') !== -1) {
+    const driveUrl = findDriveImageByPath_(s);
+    if (driveUrl) return driveUrl;
+  }
+
+  // Dernier recours: chercher par nom de fichier dans le dossier AppSheet
+  const fallbackUrl = findDriveImageByName_(s);
+  if (fallbackUrl) return fallbackUrl;
+
+  // Sinon retourner tel quel
   return s;
+}
+
+/**
+ * Cherche une image dans Google Drive à partir d'un chemin AppSheet
+ * ex: "Feuille 1_Images/Ntm.collier_image.191210.jpg"
+ * Le dossier parent est celui qui contient le spreadsheet
+ */
+function findDriveImageByPath_(path) {
+  try {
+    // Extraire le nom du dossier et du fichier
+    const parts = path.replace(/\\/g, '/').split('/');
+    const fileName = parts.pop();
+    const folderName = parts.join('/');
+
+    // Trouver le dossier du spreadsheet
+    const ssFile = DriveApp.getFileById(SpreadsheetApp.getActiveSpreadsheet().getId());
+    const parentFolder = ssFile.getParents().next();
+
+    // Chercher le sous-dossier AppSheet
+    const folderIter = parentFolder.getFolders();
+    let targetFolder = null;
+    while (folderIter.hasNext()) {
+      const f = folderIter.next();
+      if (f.getName() === folderName || f.getName() === folderName.replace(/_/g, ' ')) {
+        targetFolder = f;
+        break;
+      }
+    }
+
+    // Si le dossier n'est pas trouvé, chercher directement dans le parent
+    if (!targetFolder) {
+      targetFolder = parentFolder;
+    }
+
+    // Chercher le fichier par nom
+    const fileIter = targetFolder.getFilesByName(fileName);
+    if (fileIter.hasNext()) {
+      const file = fileIter.next();
+      // Rendre le fichier publiquement accessible (lecture)
+      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      return 'https://lh3.googleusercontent.com/d/' + file.getId();
+    }
+
+    // Chercher aussi dans les sous-dossiers
+    const subFolders = targetFolder.getFolders();
+    while (subFolders.hasNext()) {
+      const sub = subFolders.next();
+      const subFileIter = sub.getFilesByName(fileName);
+      if (subFileIter.hasNext()) {
+        const file = subFileIter.next();
+        file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+        return 'https://lh3.googleusercontent.com/d/' + file.getId();
+      }
+    }
+  } catch (e) {
+    Logger.log('findDriveImageByPath_ error for "%s": %s', path, e.message || e);
+  }
+  return null;
+}
+
+/**
+ * Cherche une image par nom de fichier dans le dossier du spreadsheet
+ * et ses sous-dossiers (récurseif, max 2 niveaux)
+ */
+function findDriveImageByName_(fileName) {
+  try {
+    const ssFile = DriveApp.getFileById(SpreadsheetApp.getActiveSpreadsheet().getId());
+    const parentFolder = ssFile.getParents().next();
+    const result = searchFileInFolder_(parentFolder, fileName, 2);
+    if (result) {
+      result.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      return 'https://lh3.googleusercontent.com/d/' + result.getId();
+    }
+  } catch (e) {
+    Logger.log('findDriveImageByName_ error for "%s": %s', fileName, e.message || e);
+  }
+  return null;
+}
+
+function searchFileInFolder_(folder, fileName, maxDepth) {
+  if (maxDepth <= 0) return null;
+  try {
+    const fileIter = folder.getFilesByName(fileName);
+    if (fileIter.hasNext()) return fileIter.next();
+    const subFolders = folder.getFolders();
+    while (subFolders.hasNext()) {
+      const result = searchFileInFolder_(subFolders.next(), fileName, maxDepth - 1);
+      if (result) return result;
+    }
+  } catch (e) {}
+  return null;
 }
 
 function parsePrice_(v) {
