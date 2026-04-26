@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 function CompletionInner() {
   const [status, setStatus] = useState();
@@ -78,5 +78,13 @@ function CompletionInner() {
 }
 
 export default function CompletionPage() {
-  return <CompletionInner />;
+  return (
+    <Suspense fallback={
+      <div className="container" style={{ minHeight: "60vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div>Loading...</div>
+      </div>
+    }>
+      <CompletionInner />
+    </Suspense>
+  );
 }
