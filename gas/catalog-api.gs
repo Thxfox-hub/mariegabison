@@ -195,10 +195,16 @@ function normalizeCategory_(raw) {
  *  - Chemin AppSheet (ex: "Feuille 1_Images/Ntm.collier_image.191210.jpg")
  *    → cherche le fichier dans le dossier parent du spreadsheet et retourne l'URL publique
  */
+// Cache des IDs d'images déjà partagés pour éviter les appels setSharing répétés
+const SHARED_IMAGES_CACHE = {};
+
 function resolveImage_(v) {
   if (!isFilled_(v)) return '';
   const s = String(v).trim();
   if (!s) return '';
+
+  // Ignorer les valeurs purement numériques (ex: prix qui fuit dans la colonne image)
+  if (/^\d+(?:[.,]\d+)?$/.test(s)) return '';
 
   // URL directe
   if (/^https?:\/\//i.test(s)) return s;
@@ -221,9 +227,12 @@ function resolveImage_(v) {
     if (driveUrl) return driveUrl;
   }
 
-  // Dernier recours: chercher par nom de fichier dans le dossier AppSheet
-  const fallbackUrl = findDriveImageByName_(s);
-  if (fallbackUrl) return fallbackUrl;
+  // Dernier recours: chercher par nom de fichier dans le dossier du spreadsheet
+  // Uniquement si ça ressemble à un nom de fichier (contient un point ou des lettres)
+  if (/[a-zA-Z]/.test(s) && /\./.test(s)) {
+    const fallbackUrl = findDriveImageByName_(s);
+    if (fallbackUrl) return fallbackUrl;
+  }
 
   // Sinon retourner tel quel
   return s;
@@ -241,8 +250,9 @@ function findDriveImageByPath_(path) {
     const fileName = parts.pop();
     const folderName = parts.join('/');
 
-    // Trouver le dossier du spreadsheet
-    const ssFile = DriveApp.getFileById(SpreadsheetApp.getActiveSpreadsheet().getId());
+    // Trouver le dossier du spreadsheet (utiliser SPREADSHEET_ID car getActiveSpreadsheet()
+    // retourne null en contexte web app déployée)
+    const ssFile = DriveApp.getFileById(SPREADSHEET_ID);
     const parentFolder = ssFile.getParents().next();
 
     // Chercher le sous-dossier AppSheet
@@ -265,9 +275,13 @@ function findDriveImageByPath_(path) {
     const fileIter = targetFolder.getFilesByName(fileName);
     if (fileIter.hasNext()) {
       const file = fileIter.next();
-      // Rendre le fichier publiquement accessible (lecture)
-      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-      return 'https://lh3.googleusercontent.com/d/' + file.getId();
+      // Rendre le fichier publiquement accessible (lecture) si pas déjà fait
+      const fileId = file.getId();
+      if (!SHARED_IMAGES_CACHE[fileId]) {
+        try { file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch(e) {}
+        SHARED_IMAGES_CACHE[fileId] = true;
+      }
+      return 'https://lh3.googleusercontent.com/d/' + fileId;
     }
 
     // Chercher aussi dans les sous-dossiers
@@ -277,8 +291,12 @@ function findDriveImageByPath_(path) {
       const subFileIter = sub.getFilesByName(fileName);
       if (subFileIter.hasNext()) {
         const file = subFileIter.next();
-        file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-        return 'https://lh3.googleusercontent.com/d/' + file.getId();
+        const fileId2 = file.getId();
+        if (!SHARED_IMAGES_CACHE[fileId2]) {
+          try { file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch(e) {}
+          SHARED_IMAGES_CACHE[fileId2] = true;
+        }
+        return 'https://lh3.googleusercontent.com/d/' + fileId2;
       }
     }
   } catch (e) {
@@ -293,12 +311,16 @@ function findDriveImageByPath_(path) {
  */
 function findDriveImageByName_(fileName) {
   try {
-    const ssFile = DriveApp.getFileById(SpreadsheetApp.getActiveSpreadsheet().getId());
+    const ssFile = DriveApp.getFileById(SPREADSHEET_ID);
     const parentFolder = ssFile.getParents().next();
     const result = searchFileInFolder_(parentFolder, fileName, 2);
     if (result) {
-      result.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-      return 'https://lh3.googleusercontent.com/d/' + result.getId();
+      const fileId = result.getId();
+      if (!SHARED_IMAGES_CACHE[fileId]) {
+        try { result.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch(e) {}
+        SHARED_IMAGES_CACHE[fileId] = true;
+      }
+      return 'https://lh3.googleusercontent.com/d/' + fileId;
     }
   } catch (e) {
     Logger.log('findDriveImageByName_ error for "%s": %s', fileName, e.message || e);

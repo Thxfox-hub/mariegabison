@@ -68,8 +68,8 @@ export async function POST(req) {
       line_items,
       customer_email: contact?.email || undefined,
       phone_number_collection: { enabled: true },
-      success_url: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3001'}/checkout/completion?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3001'}/checkout/canceled`,
+      success_url: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/checkout/completion?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/checkout/canceled`,
       metadata: {
         name: contact?.name || '',
         phone: contact?.phone || '',
