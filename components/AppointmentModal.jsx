@@ -3,9 +3,11 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import { useMemo, useState } from "react";
 import { useCart } from "./CartProvider";
+import { useTranslation } from '../lib/i18n/context';
 
 export default function AppointmentModal({ open, onClose, instagramUrl = "https://www.instagram.com/maisonmariegabison/" }) {
   const { items, total, clear } = useCart();
+  const { t, lang } = useTranslation();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -13,25 +15,25 @@ export default function AppointmentModal({ open, onClose, instagramUrl = "https:
   const [sendState, setSendState] = useState("idle"); // idle | sending | sent | error
   const [sendError, setSendError] = useState(null);
 
-  const fmt = useMemo(() => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }), []);
+  const fmt = useMemo(() => new Intl.NumberFormat(lang === 'en' ? 'en-US' : lang === 'ru' ? 'ru-RU' : lang === 'it' ? 'it-IT' : 'fr-FR', { style: 'currency', currency: 'EUR' }), [lang]);
 
   const message = useMemo(() => {
     const lines = [];
-    lines.push("Bonjour, je souhaite prendre rendez-vous pour ces articles :");
+    lines.push(t('appointment.greeting'));
     if (items.length === 0) {
-      lines.push("(Panier vide)");
+      lines.push(t('appointment.emptyCart'));
     } else {
       for (const it of items) {
         lines.push(`- ${it.title} × ${it.quantity || 1} (${fmt.format(Number(it.price) || 0)})`);
       }
-      lines.push(`Total estimé : ${fmt.format(total)}`);
+      lines.push(`${t('appointment.estimatedTotal')}: ${fmt.format(total)}`);
     }
-    if (name.trim()) lines.push(`Nom : ${name.trim()}`);
-    if (phone.trim()) lines.push(`Téléphone : ${phone.trim()}`);
-    if (email.trim()) lines.push(`Email : ${email.trim()}`);
-    lines.push("Merci !");
+    if (name.trim()) lines.push(`${t('appointment.name')}: ${name.trim()}`);
+    if (phone.trim()) lines.push(`${t('appointment.phone')}: ${phone.trim()}`);
+    if (email.trim()) lines.push(`${t('appointment.email')}: ${email.trim()}`);
+    lines.push(t('appointment.thanks'));
     return lines.join("\n");
-  }, [items, total, name, phone, fmt, email]);
+  }, [items, total, name, phone, fmt, email, t]);
 
   const copyToClipboard = async () => {
     try {
@@ -74,40 +76,40 @@ export default function AppointmentModal({ open, onClose, instagramUrl = "https:
         <Dialog.Overlay className="fixed inset-0 bg-black/50" />
         <Dialog.Content className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white border border-[var(--border)] w-[92vw] max-w-[680px] max-h-[85vh] overflow-auto p-0">
           <div className="modal-header">
-            <Dialog.Title className="modal-title">Prendre rendez-vous</Dialog.Title>
+            <Dialog.Title className="modal-title">{t('appointment.title')}</Dialog.Title>
             <Dialog.Close asChild>
-              <button className="modal-close" aria-label="Fermer">Fermer</button>
+              <button className="modal-close" aria-label={t('cart.close')}>{t('cart.close')}</button>
             </Dialog.Close>
           </div>
           <div className="modal-body">
             <div className="modal-section" style={{ gridColumn: '1 / -1' }}>
-              <p style={{ marginTop: 0, color: '#555' }}>Un message sera généré automatiquement avec le contenu de votre panier. Vous pouvez le copier et nous écrire sur Instagram.</p>
+              <p style={{ marginTop: 0, color: '#555' }}>{t('appointment.intro')}</p>
               <div style={{ display: 'grid', gap: 8, margin: '12px 0' }}>
                 <label>
-                  <div className="sr-only">Nom</div>
-                  <input className="input" placeholder="Votre nom (optionnel)" value={name} onChange={(e) => setName(e.target.value)} />
+                  <div className="sr-only">{t('appointment.name')}</div>
+                  <input className="input" placeholder={t('appointment.name')} value={name} onChange={(e) => setName(e.target.value)} />
                 </label>
                 <label>
-                  <div className="sr-only">Téléphone</div>
-                  <input className="input" placeholder="Téléphone (optionnel)" value={phone} onChange={(e) => setPhone(e.target.value)} />
+                  <div className="sr-only">{t('appointment.phone')}</div>
+                  <input className="input" placeholder={t('appointment.phone')} value={phone} onChange={(e) => setPhone(e.target.value)} />
                 </label>
                 <label>
-                  <div className="sr-only">Email</div>
-                  <input className="input" type="email" placeholder="Email (optionnel)" value={email} onChange={(e) => setEmail(e.target.value)} />
+                  <div className="sr-only">{t('appointment.email')}</div>
+                  <input className="input" type="email" placeholder={t('appointment.email')} value={email} onChange={(e) => setEmail(e.target.value)} />
                 </label>
               </div>
               <textarea className="input" style={{ width: '100%', height: 160 }} readOnly value={message} />
               <div className="modal-actions">
-                <button className="btn" onClick={copyToClipboard}>{copied ? 'Copié !' : 'Copier le message'}</button>
+                <button className="btn" onClick={copyToClipboard}>{copied ? t('appointment.copyMessage') + ' ✔' : t('appointment.copyMessage')}</button>
                 <button className="btn" onClick={sendViaBot} disabled={sendState === 'sending'}>
-                  {sendState === 'sending' ? 'Envoi…' : (sendState === 'sent' ? 'Envoyé ✔' : 'Envoyer via le bot')}
+                  {sendState === 'sending' ? t('checkout.sending') : (sendState === 'sent' ? t('appointment.thanks') : t('appointment.sendBot'))}
                 </button>
-                <button className="btn primary" onClick={goToInstagram}>Ouvrir Instagram</button>
+                <button className="btn primary" onClick={goToInstagram}>{t('appointment.openInstagram')}</button>
               </div>
               {sendState === 'error' && (
-                <p style={{ color: '#b20000', marginTop: 8 }}>Échec de l\'envoi: {sendError}</p>
+                <p style={{ color: '#b20000', marginTop: 8 }}>{t('appointment.sendFailed')}: {sendError}</p>
               )}
-              <p style={{ marginTop: 12, fontSize: '.9rem', color: '#666' }}>Après avoir envoyé votre message, nous vous recontacterons pour confirmer la date et l'heure du rendez-vous.</p>
+              <p style={{ marginTop: 12, fontSize: '.9rem', color: '#666' }}>{t('appointment.afterSend')}</p>
             </div>
           </div>
         </Dialog.Content>
