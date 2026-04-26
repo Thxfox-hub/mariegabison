@@ -38,7 +38,7 @@ export function CartProvider({ children }) {
       } else {
         next = [...prev, { ...item, quantity: qty }];
       }
-      try { localStorage.setItem("zhop_cart", JSON.stringify(next)); } catch {}
+      try { localStorage.setItem("mariegabison_cart", JSON.stringify(next)); } catch {}
       return next;
     });
     setLastAddedAt(Date.now());
@@ -47,7 +47,7 @@ export function CartProvider({ children }) {
   const removeItem = useCallback((idOrTitle) => {
     setItems((prev) => {
       const next = prev.filter((it) => (it.id || it.title) !== idOrTitle);
-      try { localStorage.setItem("zhop_cart", JSON.stringify(next)); } catch {}
+      try { localStorage.setItem("mariegabison_cart", JSON.stringify(next)); } catch {}
       return next;
     });
   }, []);
@@ -55,14 +55,14 @@ export function CartProvider({ children }) {
   const setQuantity = useCallback((idOrTitle, qty) => {
     setItems((prev) => {
       const next = prev.map((it) => (it.id || it.title) === idOrTitle ? { ...it, quantity: Math.max(1, qty) } : it);
-      try { localStorage.setItem("zhop_cart", JSON.stringify(next)); } catch {}
+      try { localStorage.setItem("mariegabison_cart", JSON.stringify(next)); } catch {}
       return next;
     });
   }, []);
 
   const clear = useCallback(() => {
     setItems(() => {
-      try { localStorage.setItem("zhop_cart", JSON.stringify([])); } catch {}
+      try { localStorage.setItem("mariegabison_cart", JSON.stringify([])); } catch {}
       return [];
     });
   }, []);

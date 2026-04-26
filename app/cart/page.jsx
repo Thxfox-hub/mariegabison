@@ -253,8 +253,8 @@ export default function CartPage() {
       try { json = txt ? JSON.parse(txt) : null; } catch {}
       if (!res.ok || !json?.url) throw new Error(json?.error || 'Paiement indisponible');
       try {
-        localStorage.setItem("zhop_checkout_contact", JSON.stringify({ name, email, phone: fullPhone }));
-        localStorage.setItem("zhop_checkout_address", JSON.stringify(addr));
+        localStorage.setItem("mariegabison_checkout_contact", JSON.stringify({ name, email, phone: fullPhone }));
+        localStorage.setItem("mariegabison_checkout_address", JSON.stringify(addr));
       } catch {}
       window.location.href = json.url;
     } catch (e) {

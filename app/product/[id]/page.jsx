@@ -57,7 +57,7 @@ export default function ProductPage() {
         const res = await fetch('/api/catalog', { cache: 'no-store' });
         if (!res.ok) throw new Error('Catalog error');
         const data = await res.json();
-        const arr = Array.isArray(data) ? data : data.items || [];
+        const arr = Array.isArray(data) ? data : data.data || data.items || [];
         const found = arr.find(it => it.id === id || it.title === decodeURIComponent(id));
         if (!cancelled) {
           setItem(found || null);
