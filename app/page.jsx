@@ -8,13 +8,11 @@ import { useEffect, useMemo, useState } from 'react';
 import ProductCard from '../components/ProductCard';
 import { useTranslation } from '../lib/i18n/context';
 
-const CATEGORY_KEYS = ['femme', 'homme', 'collection'];
-
 export default function HomePage() {
   const { t } = useTranslation();
   const [items, setItems] = useState([]);
   const [status, setStatus] = useState('loading');
-  const [selectedCategory, setSelectedCategory] = useState('femme');
+  const [selectedCategory, setSelectedCategory] = useState('all');
   const [sortBy, setSortBy] = useState('alpha');
 
   useEffect(() => {
@@ -38,7 +36,7 @@ export default function HomePage() {
         const res = await fetch('/api/catalog', { signal: controller.signal, cache: 'no-store' });
         if (res.ok) {
           const data = await res.json();
-          const arr = Array.isArray(data) ? data : data.items || [];
+          const arr = Array.isArray(data) ? data : data.data || data.items || [];
           setItems(arr);
           setStatus('ready');
           try { localStorage.setItem('mariegabison_catalog', JSON.stringify(arr)); } catch {}
@@ -56,9 +54,15 @@ export default function HomePage() {
     return () => controller.abort();
   }, []);
 
-  // Sort items
+  // Dynamic categories from GAS data
+  const dynamicCategories = useMemo(() => {
+    const cats = new Set(items.map(it => it.category).filter(Boolean));
+    return [...cats];
+  }, [items]);
+
+  // Sort & filter items
   const sortedItems = useMemo(() => {
-    const arr = [...items];
+    let arr = selectedCategory === 'all' ? [...items] : items.filter(it => it.category === selectedCategory);
     if (sortBy === 'alpha') {
       arr.sort((a, b) => (a.title || '').localeCompare(b.title || '', 'fr'));
     } else if (sortBy === 'price-asc') {
@@ -67,19 +71,26 @@ export default function HomePage() {
       arr.sort((a, b) => (Number(b.price) || 0) - (Number(a.price) || 0));
     }
     return arr;
-  }, [items, sortBy]);
+  }, [items, sortBy, selectedCategory]);
 
   return (
     <>
-      {/* Category Bar */}
+      {/* Category Bar - dynamic from GAS data */}
       <div className="category-bar">
-        {CATEGORY_KEYS.map((cat) => (
+        <button
+          key="all"
+          className={`category-link ${selectedCategory === 'all' ? 'active' : ''}`}
+          onClick={() => setSelectedCategory('all')}
+        >
+          {t('categories.all')}
+        </button>
+        {dynamicCategories.map((cat) => (
           <button
             key={cat}
             className={`category-link ${selectedCategory === cat ? 'active' : ''}`}
             onClick={() => setSelectedCategory(cat)}
           >
-            {t(`categories.${cat}`)}
+            {t(`categories.${cat}`) || cat}
           </button>
         ))}
       </div>

@@ -7,8 +7,15 @@
     "home": "Home"
   },
   "categories": {
+    "all": "ALL",
     "femme": "WOMEN",
     "homme": "MEN",
+    "Collier": "NECKLACES",
+    "Bracelet": "BRACELETS",
+    "Bague": "RINGS",
+    "Boucles d'oreille": "EARRINGS",
+    "Parure": "JEWELLERY SETS",
+    "Autres": "OTHERS",
     "collection": "COLLECTION"
   },
   "search": {

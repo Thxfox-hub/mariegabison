@@ -7,8 +7,15 @@
     "home": "Главная"
   },
   "categories": {
+    "all": "ВСЕ",
     "femme": "ЖЕНЩИНЫ",
     "homme": "МУЖЧИНЫ",
+    "Collier": "КОЛЬЕ",
+    "Bracelet": "БРАСЛЕТЫ",
+    "Bague": "КОЛЬЦА",
+    "Boucles d'oreille": "СЕРЬГИ",
+    "Parure": "НАБОРЫ",
+    "Autres": "ДРУГОЕ",
     "collection": "КОЛЛЕКЦИЯ"
   },
   "search": {

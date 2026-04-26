@@ -7,8 +7,15 @@
     "home": "Accueil"
   },
   "categories": {
+    "all": "TOUT",
     "femme": "FEMME",
     "homme": "HOMME",
+    "Collier": "COLLIERS",
+    "Bracelet": "BRACELETS",
+    "Bague": "BAGUES",
+    "Boucles d'oreille": "BOUCLES D'OREILLE",
+    "Parure": "PARURES",
+    "Autres": "AUTRES",
     "collection": "COLLECTION"
   },
   "search": {

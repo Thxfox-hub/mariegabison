@@ -7,8 +7,15 @@
     "home": "Home"
   },
   "categories": {
+    "all": "TUTTO",
     "femme": "DONNA",
     "homme": "UOMO",
+    "Collier": "COLLANE",
+    "Bracelet": "BRACCIALI",
+    "Bague": "ANELLI",
+    "Boucles d'oreille": "ORECCHINI",
+    "Parure": "PARURES",
+    "Autres": "ALTRI",
     "collection": "COLLEZIONE"
   },
   "search": {
