@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "./CartProvider";
 import { useTranslation } from '../lib/i18n/context';
+import { animateToCart } from '../lib/animateToCart';
 
 export default function ProductModal({ item, onClose, instagramUrl = "https://www.instagram.com/maisonmariegabison/" }) {
   const { t, lang } = useTranslation();
@@ -36,6 +37,9 @@ export default function ProductModal({ item, onClose, instagramUrl = "https://ww
     addItem(item, n);
     setAdded(true);
     setTimeout(() => setAdded(false), 1500);
+
+    const img = document.querySelector('.modal-media img');
+    if (img) animateToCart(img);
   };
   const handleBuyNow = () => {
     const n = Math.max(1, Number(qty) || 1);

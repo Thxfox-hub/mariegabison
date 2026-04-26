@@ -13,6 +13,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useCart } from '../../../components/CartProvider';
 import { useTranslation } from '../../../lib/i18n/context';
+import { animateToCart } from '../../../lib/animateToCart';
 
 const PLACEHOLDER_IMAGES = [
   'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=800&q=80',
@@ -73,12 +74,16 @@ export default function ProductPage() {
 
   const fmt = useMemo(() => new Intl.NumberFormat(lang === 'en' ? 'en-US' : lang === 'ru' ? 'ru-RU' : lang === 'it' ? 'it-IT' : 'fr-FR', { style: 'currency', currency: 'EUR' }), [lang]);
 
-  const handleAdd = () => {
+  const handleAdd = (e) => {
     if (!item) return;
     const n = Math.max(1, Number(qty) || 1);
     addItem(item, n);
     setAdded(true);
     setTimeout(() => setAdded(false), 1500);
+
+    // Animate image
+    const img = document.querySelector('.product-image-wrap img');
+    if (img) animateToCart(img);
   };
 
   const handleBuyNow = () => {

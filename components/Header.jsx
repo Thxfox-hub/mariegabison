@@ -98,15 +98,24 @@ export default function Header({ cartCount = 0, onCartClick, onMenuClick, onLogi
           </div>
 
           <button
+            id="cart-icon-target"
             className="header-nav-link header-bag"
             onClick={onCartClick}
             aria-label={t('nav.bag')}
+            style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '6px' }}
           >
-            <span className="desktop-only">{t('nav.bag')} ({mounted ? cartCount : 0})</span>
-            <svg className="mobile-only" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M6 6h12l1 14H5L6 6z"/>
-              <path d="M9 6V4a3 3 0 0 1 6 0v2"/>
-            </svg>
+            <span className="desktop-only" style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              {t('nav.bag')}
+            </span>
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
+                <path d="M6 6h12l1 14H5L6 6z"/>
+                <path d="M9 6V4a3 3 0 0 1 6 0v2"/>
+              </svg>
+              {mounted && cartCount > 0 && (
+                <span className="cart-badge">{cartCount > 99 ? '99+' : cartCount}</span>
+              )}
+            </div>
           </button>
         </div>
       </div>
