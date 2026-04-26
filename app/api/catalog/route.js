@@ -200,18 +200,20 @@ export async function GET(req) {
   // Otherwise go fetch now (force or no cache)
   try {
     const rawItems = await fetchFromGAS(url);
-    // Reduce payload: keep only needed fields
-    const items = rawItems.map((it) => ({
-      id: it.id ?? it.ID ?? it.Id ?? it.title ?? undefined,
-      title: it.title ?? it.name ?? '',
-      price: it.price ?? it.Price ?? 0,
-      description: it.description ?? it.Description ?? '',
-      category: it.category ?? it.Category ?? '',
-      imageUrl: it.imageUrl ?? it.image ?? it.ImageUrl ?? '',
-      weight_g: it.weight_g ?? it.weightG ?? undefined,
-      weight_mg: it.weight_mg ?? it.weightMg ?? undefined,
-      weight: it.weight ?? undefined,
-    }));
+    // Reduce payload: keep only needed fields, skip items without title
+    const items = rawItems
+      .filter((it) => (it.title ?? it.name ?? '').trim() !== '')
+      .map((it) => ({
+        id: it.id ?? it.ID ?? it.Id ?? it.title ?? undefined,
+        title: it.title ?? it.name ?? '',
+        price: it.price ?? it.Price ?? null,
+        description: it.description ?? it.Description ?? '',
+        category: it.category ?? it.Category ?? '',
+        imageUrl: it.imageUrl ?? it.image ?? it.ImageUrl ?? '',
+        weight_g: it.weight_g ?? it.weightG ?? undefined,
+        weight_mg: it.weight_mg ?? it.weightMg ?? undefined,
+        weight: it.weight ?? undefined,
+      }));
     CATALOG_CACHE = { ts: Date.now(), items };
     return new Response(pretty ? JSON.stringify(items, null, 2) : JSON.stringify(items), {
       status: 200,

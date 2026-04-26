@@ -6,6 +6,8 @@
 "use client";
 
 import Link from 'next/link';
+import { useMemo } from 'react';
+import { useTranslation } from '../lib/i18n/context';
 
 const PLACEHOLDER_IMAGES = [
   'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=600&q=80',
@@ -18,6 +20,9 @@ const PLACEHOLDER_IMAGES = [
 
 export default function ProductCard({ item }) {
   const { id, title, price, imageUrl } = item;
+  const { lang } = useTranslation();
+
+  const fmt = useMemo(() => new Intl.NumberFormat(lang === 'en' ? 'en-US' : lang === 'ru' ? 'ru-RU' : lang === 'it' ? 'it-IT' : 'fr-FR', { style: 'currency', currency: 'EUR' }), [lang]);
 
   const getPlaceholder = (str) => {
     let hash = 0;
@@ -36,7 +41,6 @@ export default function ProductCard({ item }) {
     }
   };
 
-  const fmt = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' });
   const formatPrice = (p) => {
     const n = Number(p);
     return Number.isFinite(n) ? fmt.format(n) : '';
