@@ -5,11 +5,13 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslation } from '../lib/i18n/context';
+import useFocusTrap from '../lib/useFocusTrap';
 
 export default function LoginModal({ open, onClose }) {
   const { t } = useTranslation();
   const [isVisible, setIsVisible] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
+  const trapRef = useFocusTrap(isVisible && isAnimating);
 
   useEffect(() => {
     if (open) {
@@ -30,7 +32,7 @@ export default function LoginModal({ open, onClose }) {
   };
 
   return (
-    <div className={`modal-backdrop ${isAnimating ? 'active' : ''}`} onClick={handleClose}>
+    <div ref={trapRef} className={`modal-backdrop ${isAnimating ? 'active' : ''}`} onClick={handleClose} role="dialog" aria-modal="true" aria-label={t('login.title')}>
       <div className={`modal-panel ${isAnimating ? 'active' : ''}`} onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2 className="modal-title">{t('login.title')}</h2>

@@ -8,6 +8,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useTranslation } from '../lib/i18n/context';
 import { useCart } from './CartProvider';
+import useFocusTrap from '../lib/useFocusTrap';
 
 const CATEGORY_IDS = ['all', 'femme', 'homme'];
 
@@ -16,8 +17,9 @@ export default function MenuOverlay({ open, onClose }) {
   const { items } = useCart();
   const [isVisible, setIsVisible] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
+  const trapRef = useFocusTrap(isVisible && isAnimating);
 
-  // Extract dynamic product categories from cart items (which mirror catalog)
+  // Extract dynamic product categories from catalog
   const productCategories = useMemo(() => {
     try {
       const cached = localStorage.getItem('mariegabison_catalog');
@@ -51,7 +53,14 @@ export default function MenuOverlay({ open, onClose }) {
   };
 
   return (
-    <div className={`menu-backdrop ${isAnimating ? 'active' : ''}`} onClick={handleClose}>
+    <div
+      ref={trapRef}
+      className={`menu-backdrop ${isAnimating ? 'active' : ''}`}
+      onClick={handleClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label={t('nav.menu')}
+    >
       <div className={`menu-panel ${isAnimating ? 'active' : ''}`} onClick={(e) => e.stopPropagation()}>
         {/* Header with close button */}
         <div className="menu-header">

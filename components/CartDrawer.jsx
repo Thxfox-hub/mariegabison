@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "./CartProvider";
 import { useTranslation } from '../lib/i18n/context';
+import useFocusTrap from '../lib/useFocusTrap';
 
 export default function CartDrawer({ open, onClose, onBook }) {
   const { items, setQuantity, removeItem, clear, total } = useCart();
@@ -11,6 +12,7 @@ export default function CartDrawer({ open, onClose, onBook }) {
   const router = useRouter();
   const [isVisible, setIsVisible] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
+  const trapRef = useFocusTrap(isVisible && isAnimating);
 
   // Prefetch /cart so navigation is instant and more reliable
   useEffect(() => {
@@ -42,6 +44,7 @@ export default function CartDrawer({ open, onClose, onBook }) {
 
   return (
     <div
+      ref={trapRef}
       className={`drawer-backdrop ${isAnimating ? 'active' : ''}`}
       role="dialog"
       aria-modal="true"

@@ -78,7 +78,7 @@ export default function Header({ cartCount = 0, onCartClick, onMenuClick, onLogi
             <button
               className="header-nav-link lang-btn"
               onClick={() => setLangOpen(!langOpen)}
-              aria-label="Language"
+              aria-label={t('nav.language')}
             >
               {lang.toUpperCase()}
             </button>
