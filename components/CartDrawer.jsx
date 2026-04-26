@@ -67,29 +67,26 @@ export default function CartDrawer({ open, onClose, onBook }) {
               {items.map((it) => {
                 const id = it.id || it.title;
                 return (
-                  <li key={id} className="cart-item">
-                    <div className="cart-item-main" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <li key={id} className="cart-item">
                       {it.imageUrl && (
-                        <img src={it.imageUrl} alt={it.title} style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 6 }} onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                        <img className="cart-item-image" src={it.imageUrl} alt={it.title} onError={(e) => { e.currentTarget.style.display = 'none'; }} />
                       )}
-                      <div style={{ flex: 1 }}>
-                        <div className="cart-item-title">{it.title}</div>
-                        <div className="cart-item-price">{fmt.format(Number(it.price) || 0)}</div>
+                      <div className="cart-item-details">
+                        <div className="cart-item-header">
+                          <div className="cart-item-title">{it.title}</div>
+                          <div className="cart-item-price">{fmt.format(Number(it.price) || 0)}</div>
+                        </div>
+                        <div className="cart-item-actions">
+                          <div className="qty-control">
+                            <button className="qty-btn" aria-label={t('product.decrease')} onClick={() => setQuantity(id, Math.max(1, (it.quantity || 1) - 1))}>−</button>
+                            <label className="sr-only" htmlFor={`qty-${id}`}>{t('product.quantity')}</label>
+                            <input id={`qty-${id}`} className="qty-input" type="number" readOnly value={it.quantity || 1} />
+                            <button className="qty-btn" aria-label={t('product.increase')} onClick={() => setQuantity(id, (it.quantity || 1) + 1)}>+</button>
+                          </div>
+                          <button className="remove-link" onClick={() => removeItem(id)}>{t('cart.remove')}</button>
+                        </div>
                       </div>
-                    </div>
-                    <div className="cart-item-actions">
-                      <label className="sr-only" htmlFor={`qty-${id}`}>{t('product.quantity')}</label>
-                      <input
-                        id={`qty-${id}`}
-                        className="input qty-input"
-                        type="number"
-                        min={1}
-                        value={it.quantity || 1}
-                        onChange={(e) => setQuantity(id, Number(e.target.value) || 1)}
-                      />
-                      <button className="btn" onClick={() => removeItem(id)}>{t('cart.remove')}</button>
-                    </div>
-                  </li>
+                    </li>
                 );
               })}
             </ul>

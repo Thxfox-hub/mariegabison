@@ -266,7 +266,7 @@ export default function CartPage() {
 
   if (!mounted) {
     return (
-      <main className="container" style={{ paddingTop: 16 }}>
+      <main className="container cart-page" style={{ paddingTop: 16 }}>
         <div className="status">{t('cart.loading')}</div>
       </main>
     );
@@ -275,7 +275,7 @@ export default function CartPage() {
   return (
     <>
       {/* Header is provided by AppShell */}
-      <main className="container" style={{ paddingTop: 16, paddingLeft: 24, paddingRight: 24 }}>
+      <main className="container cart-page" style={{ paddingTop: 16, paddingLeft: 24, paddingRight: 24 }}>
         <div className="grid" style={{ gridTemplateColumns: '1fr', gap: 24 }}>
           {/* Content layout */}
           <div className="grid" style={{ gridTemplateColumns: '1fr', gap: 24 }}>
@@ -292,19 +292,23 @@ export default function CartPage() {
                     const id = it.id || it.title;
                     return (
                       <li key={id} className="cart-item">
-                        <div className="cart-item-main" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                          {it.imageUrl && (
-                            <img src={it.imageUrl} alt={it.title} style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 8 }} />
-                          )}
-                          <div style={{ flex: 1 }}>
+                        {it.imageUrl && (
+                          <img className="cart-item-image" src={it.imageUrl} alt={it.title} />
+                        )}
+                        <div className="cart-item-details">
+                          <div className="cart-item-header">
                             <div className="cart-item-title">{it.title}</div>
                             <div className="cart-item-price">{fmt.format(Number(it.price) || 0)}</div>
                           </div>
-                        </div>
-                        <div className="cart-item-actions">
-                          <label className="sr-only" htmlFor={`qty-${id}`}>Quantité</label>
-                          <input id={`qty-${id}`} className="input qty-input" type="number" min={1} value={it.quantity || 1} onChange={(e) => setQuantity(id, Number(e.target.value) || 1)} />
-                          <button className="btn" onClick={() => removeItem(id)}>{t('cart.remove')}</button>
+                          <div className="cart-item-actions">
+                            <div className="qty-control">
+                              <button className="qty-btn" aria-label={t('product.decrease')} onClick={() => setQuantity(id, Math.max(1, (it.quantity || 1) - 1))}>−</button>
+                              <label className="sr-only" htmlFor={`qty-${id}`}>{t('product.quantity')}</label>
+                              <input id={`qty-${id}`} className="qty-input" type="number" readOnly value={it.quantity || 1} />
+                              <button className="qty-btn" aria-label={t('product.increase')} onClick={() => setQuantity(id, (it.quantity || 1) + 1)}>+</button>
+                            </div>
+                            <button className="remove-link" onClick={() => removeItem(id)}>{t('cart.remove')}</button>
+                          </div>
                         </div>
                       </li>
                     );
