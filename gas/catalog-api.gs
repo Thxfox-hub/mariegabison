@@ -1,15 +1,21 @@
 /**
  * API Catalogue Marie Gabison
- * - Colonnes acceptées par groupe (underscore ou espaces) : nom|prix|description|image
- *   ex: collier_nom, collier_prix, collier_description, collier_image (description & image optionnelles)
+ * - Format plat (réponses formulaire) : Horodateur | Nom | Type | Prix | Images | Description
+ *   Colonnes reconnues (insensible casse/accents) :
+ *     Nom/Name/Titre → title
+ *     Type/Category/Categorie → category (normalisée via normalizeCategory_)
+ *     Prix/Price → price
+ *     Images/Image/Photo/Photos → image (plusieurs URLs séparées par virgules)
+ *     Description/Desc → description
  * - Catégories normalisées: Collier, Bracelet, Boucles d'oreille, Bague, Parure, Homme, Femme, Autres
- * - Image: colonne <categorie>_image ou <categorie>_photo ou <categorie>_imageUrl
- *   → URL directe ou ID Google Drive (converti automatiquement en URL publique)
- * - Retourne: { success: true, data: [ {id,title,price,category,description?,imageUrl?} ] }
+ * - Images: URLs directes ou liens Google Drive (open?id=XXX, /file/d/XXX, ID brut)
+ *   → converties en URL publique lh3.googleusercontent.com/d/XXX (avec setSharing automatique)
+ * - Retourne: { success: true, data: [ {id,title,price,category,description?,imageUrl?,images?} ] }
+ *   imageUrl = 1ère image (rétrocompat), images = array de toutes les images
  */
 
-const SPREADSHEET_ID = '1EZ5sRppxoOWMKiI-wO-fFwiSSqwdMz_EFR2-dZW56Cs';
-const SHEET_NAME = 'Feuille 1';
+const SPREADSHEET_ID = '1p3dvpr_wH0iU3pGnjLQXrpjgp_sm3WSaurKoLWBc_Yw';
+const SHEET_NAME = 'Réponses au formulaire 1';
 
 function doGet(e) {
   if (e && e.parameter && e.parameter.test === '1') {
@@ -66,7 +72,7 @@ function doTest() {
     Logger.log('=== doTest Detailed Logs ===');
     Logger.log('Spreadsheet ID: %s', SPREADSHEET_ID);
     Logger.log('Sheet: %s', meta.sheetName);
-    Logger.log('Header parsed categories: %s', meta.categories.join(', '));
+    Logger.log('Header parsed fields: %s', JSON.stringify(meta.fields));
     Logger.log('Row count (excluding header): %s', meta.rowCount);
     Logger.log('Items built: %s', items.length);
 
@@ -75,7 +81,7 @@ function doTest() {
     });
 
     if (!items.length) {
-      Logger.log('No items found. Check header names (ex: collier_nom, collier_prix, collier_image, homme_nom, femme_prix, ...)');
+      Logger.log('No items found. Check header names (expected: Nom, Type, Prix, Images, Description)');
       Logger.log('Make sure at least one of title/price/description is present on a row.');
     }
 
@@ -91,7 +97,7 @@ function buildItems_() {
 
   const values = sh.getDataRange().getValues();
   if (!values || values.length < 2) {
-    return { items: [], meta: { sheetName: SHEET_NAME, rowCount: 0, categories: [] } };
+    return { items: [], meta: { sheetName: SHEET_NAME, rowCount: 0, fields: {}, categories: [] } };
   }
 
   const header = values[0];
@@ -99,40 +105,43 @@ function buildItems_() {
 
   Logger.log('Header columns: %s', JSON.stringify(header));
 
-  const parsed = parseHeader_(header);
-  const catMap = parsed.map;
-  const categories = parsed.categories;
-
-  Logger.log('Parsed categories: %s', categories.join(', '));
-  Logger.log('Category map: %s', JSON.stringify(catMap));
+  const fields = parseHeader_(header);
+  Logger.log('Parsed fields: %s', JSON.stringify(fields));
 
   const items = [];
+  const categoriesSet = {};
+
   rows.forEach((row, i) => {
-    categories.forEach((cat) => {
-      const f = catMap[cat] || {};
-      const title = cell_(row, f.title);
-      const price = parsePrice_(cell_(row, f.price));
-      const description = cell_(row, f.description);
-      const imageUrl = resolveImage_(cell_(row, f.image));
+    const title = cell_(row, fields.title);
+    const price = parsePrice_(cell_(row, fields.price));
+    const description = cell_(row, fields.description);
+    const rawType = cell_(row, fields.category);
+    const category = fields.category !== undefined ? normalizeCategory_(rawType) : 'Autres';
+    const images = resolveImages_(cell_(row, fields.image));
 
-      if (!isFilled_(title) && !isFilled_(price) && !isFilled_(description)) return;
+    if (!isFilled_(title) && !isFilled_(price) && !isFilled_(description)) return;
 
-      items.push({
-        id: makeId_(cat, i + 2, title),
-        title: String(title || ''),
-        price: price !== null ? price : undefined,
-        category: cat,
-        description: String(description || ''),
-        imageUrl: imageUrl || undefined
-      });
+    categoriesSet[category] = true;
+
+    items.push({
+      id: makeId_(category, i + 2, title),
+      title: String(title || ''),
+      price: price !== null ? price : undefined,
+      category: category,
+      description: String(description || ''),
+      imageUrl: images.length ? images[0] : undefined,
+      images: images.length ? images : undefined
     });
   });
+
+  const categories = Object.keys(categoriesSet);
 
   return {
     items,
     meta: {
       sheetName: SHEET_NAME,
       rowCount: rows.length,
+      fields,
       categories
     }
   };
@@ -140,36 +149,44 @@ function buildItems_() {
 
 /* =============== Helpers =============== */
 
+/**
+ * Parse l'en-tête plat et retourne les indices des colonnes par champ.
+ * Reconnait (insensible casse/accents) :
+ *   Nom/Name/Titre/Title → title
+ *   Type/Category/Categorie → category
+ *   Prix/Price → price
+ *   Images/Image/Photo/Photos/Img → image
+ *   Description/Desc → description
+ */
 function parseHeader_(headers) {
   const FIELD_MAP = {
-    'nom': 'title', 'name': 'title', 'titre': 'title',
+    'nom': 'title', 'name': 'title', 'titre': 'title', 'title': 'title',
+    'type': 'category', 'category': 'category', 'categorie': 'category',
     'prix': 'price', 'price': 'price',
-    'description': 'description', 'desc': 'description',
-    'image': 'image', 'photo': 'image', 'imageurl': 'image', 'img': 'image'
+    'images': 'image', 'image': 'image', 'photo': 'image', 'photos': 'image', 'img': 'image', 'imageurl': 'image',
+    'description': 'description', 'desc': 'description'
   };
 
-  const map = {};
-  const cats = [];
+  const fields = {};
 
   for (var c = 0; c < headers.length; c++) {
     const h = String(headers[c] || '').trim();
     if (!h) continue;
 
-    const hl = h.toLowerCase().replace(/[']/g, "'");
-    const parts = hl.split(/[\s_]+/);
-    if (parts.length < 2) continue;
-
-    const suffix = parts.pop();
-    const catRaw = parts.join(' ');
-    const field = FIELD_MAP[suffix];
-    if (!field) continue;
-
-    const cat = normalizeCategory_(catRaw);
-    if (!map[cat]) { map[cat] = {}; cats.push(cat); }
-    map[cat][field] = c;
+    const hl = stripAccents_(h.toLowerCase()).replace(/[\s_]+/g, '');
+    const field = FIELD_MAP[hl];
+    if (field && fields[field] === undefined) {
+      fields[field] = c;
+    }
   }
 
-  return { map, categories: cats };
+  return fields;
+}
+
+function stripAccents_(s) {
+  return String(s || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
 }
 
 function normalizeCategory_(raw) {
@@ -186,56 +203,97 @@ function normalizeCategory_(raw) {
   return s ? s.charAt(0).toUpperCase() + s.slice(1) : 'Autres';
 }
 
-/**
- * Convertit une valeur image en URL utilisable.
- * Accepte:
- *  - URL directe (http/https) → retournée telle quelle
- *  - ID Google Drive (ex: 1AbC...xyz) → converti en lien de visualisation
- *  - Lien drive.google.com/file/d/XXXX/ → extrait l'ID et convertit
- *  - Chemin AppSheet (ex: "Feuille 1_Images/Ntm.collier_image.191210.jpg")
- *    → cherche le fichier dans le dossier parent du spreadsheet et retourne l'URL publique
- */
 // Cache des IDs d'images déjà partagés pour éviter les appels setSharing répétés
 const SHARED_IMAGES_CACHE = {};
 
-function resolveImage_(v) {
-  if (!isFilled_(v)) return '';
+/**
+ * Convertit une cellule "Images" (potentiellement plusieurs URLs séparées par virgules)
+ * en un tableau d'URLs utilisables.
+ * Accepte par élément:
+ *  - URL directe (http/https) → retournée telle quelle
+ *  - Lien drive.google.com/open?id=XXX → extrait l'ID et convertit
+ *  - Lien drive.google.com/file/d/XXX → extrait l'ID et convertit
+ *  - ID Google Drive brut (alphanumérique 10+ chars) → converti
+ *  - Chemin AppSheet → cherche dans Google Drive
+ *  - Nom de fichier → cherche dans le dossier du spreadsheet
+ */
+function resolveImages_(v) {
+  if (!isFilled_(v)) return [];
   const s = String(v).trim();
+  if (!s) return [];
+
+  // Séparer par virgules (les URLs Drive du formulaire sont séparées par ", ")
+  const parts = s.split(/[,;]\s*/).map(function(p) { return p.trim(); }).filter(function(p) { return p; });
+  const urls = [];
+
+  for (var i = 0; i < parts.length; i++) {
+    var url = resolveSingleImage_(parts[i]);
+    if (url) urls.push(url);
+  }
+
+  return urls;
+}
+
+function resolveSingleImage_(s) {
   if (!s) return '';
 
   // Ignorer les valeurs purement numériques (ex: prix qui fuit dans la colonne image)
   if (/^\d+(?:[.,]\d+)?$/.test(s)) return '';
 
-  // URL directe
-  if (/^https?:\/\//i.test(s)) return s;
+  // URL directe (non Drive) → retournée telle quelle
+  if (/^https?:\/\//i.test(s) && s.indexOf('drive.google.com') === -1) return s;
 
-  // Lien Google Drive complet → extraire l'ID
-  const driveMatch = s.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  // Lien drive.google.com/open?id=XXX → extraire l'ID
+  var openMatch = s.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (openMatch && s.indexOf('drive.google.com') !== -1) {
+    return ensureDriveUrl_(openMatch[1]);
+  }
+
+  // Lien drive.google.com/file/d/XXX → extraire l'ID
+  var driveMatch = s.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
   if (driveMatch) {
-    return 'https://lh3.googleusercontent.com/d/' + driveMatch[1];
+    return ensureDriveUrl_(driveMatch[1]);
   }
 
   // ID Google Drive brut (alphanumérique, typiquement 20-40 chars)
   if (/^[a-zA-Z0-9_-]{10,}$/.test(s)) {
-    return 'https://lh3.googleusercontent.com/d/' + s;
+    return ensureDriveUrl_(s);
   }
 
   // Chemin AppSheet (ex: "Feuille 1_Images/Ntm.collier_image.191210.jpg")
-  // → chercher le fichier dans Google Drive et retourner l'URL publique
   if (s.indexOf('/') !== -1 || s.indexOf('\\') !== -1) {
-    const driveUrl = findDriveImageByPath_(s);
+    var driveUrl = findDriveImageByPath_(s);
     if (driveUrl) return driveUrl;
   }
 
   // Dernier recours: chercher par nom de fichier dans le dossier du spreadsheet
-  // Uniquement si ça ressemble à un nom de fichier (contient un point ou des lettres)
   if (/[a-zA-Z]/.test(s) && /\./.test(s)) {
-    const fallbackUrl = findDriveImageByName_(s);
+    var fallbackUrl = findDriveImageByName_(s);
     if (fallbackUrl) return fallbackUrl;
   }
 
-  // Sinon retourner tel quel
-  return s;
+  // URL Drive non reconnue mais commençant par http → la retourner telle quelle
+  if (/^https?:\/\//i.test(s)) return s;
+
+  return '';
+}
+
+/**
+ * Construit l'URL publique lh3.googleusercontent.com/d/XXX
+ * et s'assure que le fichier Drive est partagé "Anyone with link"
+ */
+function ensureDriveUrl_(fileId) {
+  if (!fileId) return '';
+  try {
+    if (!SHARED_IMAGES_CACHE[fileId]) {
+      var file = DriveApp.getFileById(fileId);
+      try { file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch(e) {}
+      SHARED_IMAGES_CACHE[fileId] = true;
+    }
+  } catch (e) {
+    Logger.log('ensureDriveUrl_ error for id "%s": %s', fileId, e.message || e);
+  }
+  return 'https://lh3.googleusercontent.com/d/' + fileId;
 }
 
 /**
@@ -245,17 +303,13 @@ function resolveImage_(v) {
  */
 function findDriveImageByPath_(path) {
   try {
-    // Extraire le nom du dossier et du fichier
     const parts = path.replace(/\\/g, '/').split('/');
     const fileName = parts.pop();
     const folderName = parts.join('/');
 
-    // Trouver le dossier du spreadsheet (utiliser SPREADSHEET_ID car getActiveSpreadsheet()
-    // retourne null en contexte web app déployée)
     const ssFile = DriveApp.getFileById(SPREADSHEET_ID);
     const parentFolder = ssFile.getParents().next();
 
-    // Chercher le sous-dossier AppSheet
     const folderIter = parentFolder.getFolders();
     let targetFolder = null;
     while (folderIter.hasNext()) {
@@ -266,16 +320,13 @@ function findDriveImageByPath_(path) {
       }
     }
 
-    // Si le dossier n'est pas trouvé, chercher directement dans le parent
     if (!targetFolder) {
       targetFolder = parentFolder;
     }
 
-    // Chercher le fichier par nom
     const fileIter = targetFolder.getFilesByName(fileName);
     if (fileIter.hasNext()) {
       const file = fileIter.next();
-      // Rendre le fichier publiquement accessible (lecture) si pas déjà fait
       const fileId = file.getId();
       if (!SHARED_IMAGES_CACHE[fileId]) {
         try { file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch(e) {}
@@ -284,7 +335,6 @@ function findDriveImageByPath_(path) {
       return 'https://lh3.googleusercontent.com/d/' + fileId;
     }
 
-    // Chercher aussi dans les sous-dossiers
     const subFolders = targetFolder.getFolders();
     while (subFolders.hasNext()) {
       const sub = subFolders.next();
@@ -307,7 +357,7 @@ function findDriveImageByPath_(path) {
 
 /**
  * Cherche une image par nom de fichier dans le dossier du spreadsheet
- * et ses sous-dossiers (récurseif, max 2 niveaux)
+ * et ses sous-dossiers (récursif, max 2 niveaux)
  */
 function findDriveImageByName_(fileName) {
   try {

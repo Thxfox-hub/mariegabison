@@ -44,10 +44,16 @@ export default function ProductPage() {
   const [added, setAdded] = useState(false);
   const [imgLoaded, setImgLoaded] = useState(false);
   const [visible, setVisible] = useState(false);
+  const [activeImg, setActiveImg] = useState(0);
 
   useEffect(() => {
     requestAnimationFrame(() => setVisible(true));
   }, []);
+
+  useEffect(() => {
+    setActiveImg(0);
+    setImgLoaded(false);
+  }, [params?.id]);
 
   useEffect(() => {
     const id = params?.id;
@@ -116,7 +122,11 @@ export default function ProductPage() {
   }
 
   const priceText = Number.isFinite(Number(item.price)) ? fmt.format(Number(item.price)) : '—';
-  const imgSrc = item.imageUrl || getPlaceholder(item.title);
+  const allImages = Array.isArray(item.images) && item.images.length ? item.images : (item.imageUrl ? [item.imageUrl] : []);
+  const imgSrc = allImages[activeImg] || item.imageUrl || getPlaceholder(item.title);
+
+  const goPrev = () => { setActiveImg(i => (i - 1 + allImages.length) % allImages.length); setImgLoaded(false); };
+  const goNext = () => { setActiveImg(i => (i + 1) % allImages.length); setImgLoaded(false); };
 
   return (
     <main className={`product-page ${visible ? 'product-page--visible' : ''}`}>
@@ -133,17 +143,74 @@ export default function ProductPage() {
         {/* Image column */}
         <div className="product-image-col">
           <div className={`product-image-wrap ${imgLoaded ? 'product-image-wrap--loaded' : ''}`}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={imgSrc}
-              alt={item.title || ''}
-              onLoad={() => setImgLoaded(true)}
-              onError={(e) => {
-                const fallback = getPlaceholder(item.title);
-                if (e.currentTarget.src !== fallback) e.currentTarget.src = fallback;
-              }}
-            />
-            {!imgLoaded && <div className="product-image-skeleton" />}
+            <div style={{ position: 'relative' }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={imgSrc}
+                alt={item.title || ''}
+                onLoad={() => setImgLoaded(true)}
+                onError={(e) => {
+                  const fallback = getPlaceholder(item.title);
+                  if (e.currentTarget.src !== fallback) e.currentTarget.src = fallback;
+                }}
+              />
+              {!imgLoaded && <div className="product-image-skeleton" />}
+              {allImages.length > 1 && (
+                <>
+                  <button
+                    onClick={goPrev}
+                    aria-label="Image précédente"
+                    style={{
+                      position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)',
+                      width: 36, height: 36, borderRadius: '50%', border: 'none',
+                      background: 'rgba(255,255,255,0.85)', cursor: 'pointer', fontSize: 18,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.15)', zIndex: 2,
+                    }}
+                  >‹</button>
+                  <button
+                    onClick={goNext}
+                    aria-label="Image suivante"
+                    style={{
+                      position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)',
+                      width: 36, height: 36, borderRadius: '50%', border: 'none',
+                      background: 'rgba(255,255,255,0.85)', cursor: 'pointer', fontSize: 18,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.15)', zIndex: 2,
+                    }}
+                  >›</button>
+                  <span
+                    style={{
+                      position: 'absolute', bottom: 8, right: 8,
+                      background: 'rgba(0,0,0,0.6)', color: '#fff', fontSize: 12,
+                      padding: '2px 8px', borderRadius: 12, zIndex: 2,
+                    }}
+                  >{activeImg + 1} / {allImages.length}</span>
+                </>
+              )}
+            </div>
+            {allImages.length > 1 && (
+              <div className="product-thumbnails" style={{ display: 'flex', gap: 8, marginTop: 12, overflowX: 'auto', paddingBottom: 4 }}>
+                {allImages.map((img, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => { setActiveImg(idx); setImgLoaded(false); }}
+                    style={{
+                      flexShrink: 0, width: 64, height: 64,
+                      border: idx === activeImg ? '2px solid #333' : '2px solid #eaeaea',
+                      padding: 0, cursor: 'pointer', background: '#f6f6f6', borderRadius: 4, overflow: 'hidden',
+                      opacity: idx === activeImg ? 1 : 0.6,
+                      transition: 'opacity 0.2s, border-color 0.2s',
+                    }}
+                    aria-label={`Image ${idx + 1}`}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 

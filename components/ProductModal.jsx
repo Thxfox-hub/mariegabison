@@ -23,11 +23,15 @@ export default function ProductModal({ item, onClose, instagramUrl = "https://ww
 
   if (!item) return null;
 
-  const { title, description, imageUrl, price, category } = item;
+  const { title, description, imageUrl, images, price, category } = item;
   const { addItem } = useCart();
   const router = useRouter();
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
+  const [activeImg, setActiveImg] = useState(0);
+
+  const allImages = Array.isArray(images) && images.length ? images : (imageUrl ? [imageUrl] : []);
+  const mainImg = allImages[activeImg] || imageUrl || placeholder;
 
   const fmt = useMemo(() => new Intl.NumberFormat(lang === 'en' ? 'en-US' : lang === 'ru' ? 'ru-RU' : lang === 'it' ? 'it-IT' : 'fr-FR', { style: 'currency', currency: 'EUR' }), [lang]);
   const priceText = Number.isFinite(Number(price)) ? fmt.format(Number(price)) : '—';
@@ -63,13 +67,69 @@ export default function ProductModal({ item, onClose, instagramUrl = "https://ww
           </div>
           <div className="modal-body">
             <div className="modal-media">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={imageUrl || placeholder}
-                alt={title || 'Image'}
-                onError={(e) => { if (e.currentTarget.src !== placeholder) e.currentTarget.src = placeholder; }}
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              />
+              <div style={{ position: 'relative' }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={mainImg}
+                  alt={title || 'Image'}
+                  onError={(e) => { if (e.currentTarget.src !== placeholder) e.currentTarget.src = placeholder; }}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+                {allImages.length > 1 && (
+                  <>
+                    <button
+                      onClick={() => setActiveImg(i => (i - 1 + allImages.length) % allImages.length)}
+                      aria-label="Image précédente"
+                      style={{
+                        position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)',
+                        width: 32, height: 32, borderRadius: '50%', border: 'none',
+                        background: 'rgba(255,255,255,0.85)', cursor: 'pointer', fontSize: 16,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.15)', zIndex: 2,
+                      }}
+                    >‹</button>
+                    <button
+                      onClick={() => setActiveImg(i => (i + 1) % allImages.length)}
+                      aria-label="Image suivante"
+                      style={{
+                        position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)',
+                        width: 32, height: 32, borderRadius: '50%', border: 'none',
+                        background: 'rgba(255,255,255,0.85)', cursor: 'pointer', fontSize: 16,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.15)', zIndex: 2,
+                      }}
+                    >›</button>
+                    <span
+                      style={{
+                        position: 'absolute', bottom: 8, right: 8,
+                        background: 'rgba(0,0,0,0.6)', color: '#fff', fontSize: 12,
+                        padding: '2px 8px', borderRadius: 12, zIndex: 2,
+                      }}
+                    >{activeImg + 1} / {allImages.length}</span>
+                  </>
+                )}
+              </div>
+              {allImages.length > 1 && (
+                <div className="modal-thumbnails" style={{ display: 'flex', gap: 6, marginTop: 8, overflowX: 'auto' }}>
+                  {allImages.map((img, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setActiveImg(idx)}
+                      style={{
+                        flexShrink: 0, width: 56, height: 56, border: idx === activeImg ? '2px solid #333' : '2px solid #eaeaea',
+                        padding: 0, cursor: 'pointer', background: '#f6f6f6', borderRadius: 4, overflow: 'hidden',
+                        opacity: idx === activeImg ? 1 : 0.6,
+                        transition: 'opacity 0.2s, border-color 0.2s',
+                      }}
+                      aria-label={`Image ${idx + 1}`}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             <div className="modal-section">
               <p style={{ marginTop: 0, color: '#555' }}>{category}</p>

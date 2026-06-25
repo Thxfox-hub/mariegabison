@@ -210,6 +210,7 @@ export async function GET(req) {
         description: it.description ?? it.Description ?? '',
         category: it.category ?? it.Category ?? '',
         imageUrl: it.imageUrl ?? it.image ?? it.ImageUrl ?? '',
+        images: Array.isArray(it.images) ? it.images : (it.images ? String(it.images).split(',').map(s => s.trim()).filter(Boolean) : []),
         weight_g: it.weight_g ?? it.weightG ?? undefined,
         weight_mg: it.weight_mg ?? it.weightMg ?? undefined,
         weight: it.weight ?? undefined,
