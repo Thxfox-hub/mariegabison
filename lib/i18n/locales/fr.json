@@ -123,7 +123,18 @@
     "password": "Mot de passe",
     "submit": "Se connecter",
     "noAccount": "Pas encore de compte ?",
-    "createAccount": "Créer un compte"
+    "createAccount": "Créer un compte",
+    "signUp": "S'inscrire",
+    "signIn": "Se connecter",
+    "signOut": "Se déconnecter",
+    "account": "Mon compte",
+    "welcome": "Bienvenue",
+    "confirmPassword": "Confirmer le mot de passe",
+    "loading": "Veuillez patienter…",
+    "error": "Erreur",
+    "success": "Compte créé ! Vérifiez votre email pour confirmer.",
+    "passwordMismatch": "Les mots de passe ne correspondent pas.",
+    "signedInAs": "Connecté en tant que"
   },
   "footer": {
     "brand": "Bijoux faits main à Paris",

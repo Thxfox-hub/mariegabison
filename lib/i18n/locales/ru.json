@@ -123,7 +123,18 @@
     "password": "Пароль",
     "submit": "Войти",
     "noAccount": "Нет аккаунта?",
-    "createAccount": "Создать аккаунт"
+    "createAccount": "Создать аккаунт",
+    "signUp": "Регистрация",
+    "signIn": "Войти",
+    "signOut": "Выйти",
+    "account": "Мой аккаунт",
+    "welcome": "Добро пожаловать",
+    "confirmPassword": "Подтвердите пароль",
+    "loading": "Подождите…",
+    "error": "Ошибка",
+    "success": "Аккаунт создан! Проверьте email для подтверждения.",
+    "passwordMismatch": "Пароли не совпадают.",
+    "signedInAs": "Вы вошли как"
   },
   "footer": {
     "brand": "Украшения ручной работы в Париже",

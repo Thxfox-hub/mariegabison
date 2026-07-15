@@ -123,7 +123,18 @@
     "password": "Password",
     "submit": "Log in",
     "noAccount": "Don't have an account?",
-    "createAccount": "Create an account"
+    "createAccount": "Create an account",
+    "signUp": "Sign up",
+    "signIn": "Log in",
+    "signOut": "Log out",
+    "account": "My account",
+    "welcome": "Welcome",
+    "confirmPassword": "Confirm password",
+    "loading": "Please wait…",
+    "error": "Error",
+    "success": "Account created! Check your email to confirm.",
+    "passwordMismatch": "Passwords do not match.",
+    "signedInAs": "Signed in as"
   },
   "footer": {
     "brand": "Handmade jewelry in Paris",

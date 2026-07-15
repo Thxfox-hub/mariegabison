@@ -123,7 +123,18 @@
     "password": "Password",
     "submit": "Accedi",
     "noAccount": "Non hai un account?",
-    "createAccount": "Crea un account"
+    "createAccount": "Crea un account",
+    "signUp": "Registrati",
+    "signIn": "Accedi",
+    "signOut": "Esci",
+    "account": "Il mio account",
+    "welcome": "Benvenuto",
+    "confirmPassword": "Conferma password",
+    "loading": "Attendi…",
+    "error": "Errore",
+    "success": "Account creato! Controlla la tua email per confermare.",
+    "passwordMismatch": "Le password non corrispondono.",
+    "signedInAs": "Connesso come"
   },
   "footer": {
     "brand": "Gioielli fatti a mano a Parigi",

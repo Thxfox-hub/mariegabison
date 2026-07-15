@@ -1,6 +1,6 @@
 /**
- * ProductCard.jsx - Marie Gabison Bijoux
- * Ultra-minimal Zara-style product card (image + title + price only)
+ * ProductCard.jsx - Marie Gabison Paris
+ * Elegant wedding-jewelry product card with hover effects
  * Clicking navigates to /product/[id] dedicated page.
  */
 "use client";
@@ -49,7 +49,7 @@ export default function ProductCard({ item }) {
   const productHref = `/product/${encodeURIComponent(id || title)}`;
 
   return (
-    <Link href={productHref} className="product-card" style={{ textDecoration: 'none', color: 'inherit' }}>
+    <Link href={productHref} className="product-card">
       <div className="product-card-media">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img

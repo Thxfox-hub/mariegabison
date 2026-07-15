@@ -8,33 +8,39 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Elegant wedding jewelry palette
-        ivory: '#FFFEF7',
-        champagne: '#F7E7CE',
-        gold: {
-          50: '#FBF8F1',
-          100: '#F5EDD8',
-          200: '#E8D5A3',
-          300: '#D4B96A',
-          400: '#C9A227',
-          500: '#B8860B',
-          600: '#996515',
-          700: '#7A4F14',
-          800: '#654118',
-          900: '#553719',
-        },
-        rose: {
-          50: '#FFF5F5',
-          100: '#FFE8E8',
-          200: '#FECDD3',
-          300: '#FDA4AF',
-          400: '#FB7185',
-          500: '#F43F5E',
-        },
+        ivory: '#fbfaf7',
+        champagne: '#c4b59a',
+        'champagne-light': '#ebe4d6',
+        pearl: '#f4f1ea',
+        ink: '#0c0c0c',
+        'ink-soft': '#5c5c5c',
+        gold: '#a8926a',
+        'gold-dark': '#7d6a48',
+        noir: '#0a0a0a',
+        blanc: '#ffffff',
       },
       fontFamily: {
-        serif: ['Playfair Display', 'Georgia', 'Cambria', 'Times New Roman', 'serif'],
-        sans: ['Cormorant Garamond', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        serif: ['Cormorant Garamond', 'Georgia', 'serif'],
+        sans: ['Jost', 'system-ui', 'sans-serif'],
+      },
+      keyframes: {
+        'fade-up': {
+          from: { opacity: '0', transform: 'translateY(20px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
+        'fade-in': {
+          from: { opacity: '0' },
+          to: { opacity: '1' },
+        },
+        'scale-in': {
+          from: { opacity: '0', transform: 'scale(0.98)' },
+          to: { opacity: '1', transform: 'scale(1)' },
+        },
+      },
+      animation: {
+        'fade-up': 'fade-up 1s cubic-bezier(0.22, 1, 0.36, 1) both',
+        'fade-in': 'fade-in 0.55s ease-out both',
+        'scale-in': 'scale-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both',
       },
     },
   },

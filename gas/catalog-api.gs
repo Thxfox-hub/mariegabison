@@ -18,6 +18,11 @@ const SPREADSHEET_ID = '1p3dvpr_wH0iU3pGnjLQXrpjgp_sm3WSaurKoLWBc_Yw';
 const SHEET_NAME = 'Réponses au formulaire 1';
 
 function doGet(e) {
+  // Route vers la mini-app de gestion de stock (HTML + suppression)
+  if (e && e.parameter && e.parameter.app === 'stock') {
+    return serveStockApp(e);
+  }
+
   if (e && e.parameter && e.parameter.test === '1') {
     return ContentService.createTextOutput('OK').setMimeType(ContentService.MimeType.TEXT);
   }

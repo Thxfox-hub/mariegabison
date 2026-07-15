@@ -1,21 +1,42 @@
 /**
- * page.jsx - Marie Gabison Bijoux
- * Ultra-minimal Zara-style homepage with i18n
+ * page.jsx - Marie Gabison Paris
+ * Editorial wedding-jewelry homepage with GAS-powered product catalog.
+ * Layout: CollectionIntro → Carousel → BrandManifesto → JewelryGrid →
+ *         Categories → AllCollections → BrandStory → Contact
+ * Products are fetched from /api/catalog (Google Apps Script backend).
  */
 "use client";
 
-import { useEffect, useMemo, useState } from 'react';
-import ProductCard from '../components/ProductCard';
+import { Suspense, useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import SkeletonCard from '../components/SkeletonCard';
 import { useTranslation } from '../lib/i18n/context';
+import CollectionIntro from '../components/landing/CollectionIntro';
+import Carousel from '../components/landing/Carousel';
+import BrandManifesto from '../components/landing/BrandManifesto';
+import JewelryGrid from '../components/landing/JewelryGrid';
+import Categories from '../components/landing/Categories';
+import AllCollections from '../components/landing/AllCollections';
+import BrandStory from '../components/landing/BrandStory';
+import Contact from '../components/landing/Contact';
 
 export default function HomePage() {
+  return (
+    <Suspense fallback={null}>
+      <HomeContent />
+    </Suspense>
+  );
+}
+
+function HomeContent() {
   const { t } = useTranslation();
+  const searchParams = useSearchParams();
+  const rawCat = searchParams?.get('cat') || null;
+  const catParam = rawCat && rawCat.toLowerCase() !== 'all' ? rawCat : null;
+
   const [items, setItems] = useState([]);
   const [status, setStatus] = useState('loading');
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [sortBy, setSortBy] = useState('alpha');
-  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const controller = new AbortController();
@@ -33,8 +54,8 @@ export default function HomePage() {
             }
           }
         } catch {}
-        
-        // Fetch from API
+
+        // Fetch from API (Google Apps Script)
         const res = await fetch('/api/catalog', { signal: controller.signal, cache: 'no-store' });
         if (res.ok) {
           const data = await res.json();
@@ -56,127 +77,92 @@ export default function HomePage() {
     return () => controller.abort();
   }, []);
 
-  // Dynamic categories from GAS data
-  const dynamicCategories = useMemo(() => {
-    const cats = new Set(items.map(it => it.category).filter(Boolean));
-    return [...cats];
-  }, [items]);
+  // Filter by category when ?cat= is present (from Categories links)
+  const filteredItems = useMemo(() => {
+    if (!catParam) return items;
+    return items.filter(it => {
+      const cat = (it.category || '').toLowerCase();
+      const target = catParam.toLowerCase();
+      return cat === target || cat.includes(target) || target.includes(cat);
+    });
+  }, [items, catParam]);
 
-  // Sort & filter items
-  const sortedItems = useMemo(() => {
-    let arr = selectedCategory === 'all' ? [...items] : items.filter(it => it.category === selectedCategory);
-    if (searchQuery.trim()) {
-      const q = searchQuery.trim().toLowerCase();
-      arr = arr.filter(it =>
-        (it.title || '').toLowerCase().includes(q) ||
-        (it.description || '').toLowerCase().includes(q) ||
-        (it.category || '').toLowerCase().includes(q)
-      );
-    }
-    if (sortBy === 'alpha') {
-      arr.sort((a, b) => (a.title || '').localeCompare(b.title || '', 'fr'));
-    } else if (sortBy === 'price-asc') {
-      arr.sort((a, b) => (Number(a.price) || 0) - (Number(b.price) || 0));
-    } else if (sortBy === 'price-desc') {
-      arr.sort((a, b) => (Number(b.price) || 0) - (Number(a.price) || 0));
-    }
-    return arr;
-  }, [items, sortBy, selectedCategory, searchQuery]);
+  const isDefaultView = !catParam;
 
   return (
     <>
-      {/* Category Bar - dynamic from GAS data */}
-      <div className="category-bar">
-        <button
-          key="all"
-          className={`category-link ${selectedCategory === 'all' ? 'active' : ''}`}
-          onClick={() => setSelectedCategory('all')}
-        >
-          {t('categories.all')}
-        </button>
-        {dynamicCategories.map((cat) => (
-          <button
-            key={cat}
-            className={`category-link ${selectedCategory === cat ? 'active' : ''}`}
-            onClick={() => setSelectedCategory(cat)}
-          >
-            {t(`categories.${cat}`) || cat}
-          </button>
-        ))}
-      </div>
+      {/* ===== Full landing experience (default view) ===== */}
+      {isDefaultView && (
+        <>
+          <CollectionIntro />
+          <Carousel items={items} />
+          <BrandManifesto />
+        </>
+      )}
 
-      {/* Search Bar */}
-      <div className="search-bar">
-        <input 
-          type="text" 
-          className="search-input" 
-          placeholder={t('search.placeholder')}
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-      </div>
+      {/* ===== Category-filtered view (from ?cat=) ===== */}
+      {!isDefaultView && (
+        <section className="px-6 pt-14 pb-8 text-center animate-fade-up">
+          <Link
+            href="/"
+            className="inline-block font-sans text-[10px] font-light uppercase tracking-[0.32em] text-ink-soft underline decoration-ink/15 underline-offset-6 transition hover:text-ink hover:decoration-ink/40"
+          >
+            ← Retour
+          </Link>
+          <p className="mt-6 font-sans text-[10px] font-light uppercase tracking-[0.48em] text-ink-soft">
+            {t('search.sectionTitle')}
+          </p>
+          <h2 className="mt-5 font-serif text-4xl font-light tracking-[0.08em] text-ink sm:text-5xl">
+            {catParam}
+          </h2>
+          <div className="mx-auto mt-7 h-px w-10 bg-ink/25" />
+        </section>
+      )}
 
-      {/* Section Header with filters */}
-      <div className="section-header">
-        <div className="section-label">{t('search.sectionTitle')}</div>
-        <div className="section-filters">
-          <button 
-            className={`filter-btn ${sortBy === 'alpha' ? 'active' : ''}`}
-            onClick={() => setSortBy('alpha')}
-          >
-            {t('sort.az')}
-          </button>
-          <button 
-            className={`filter-btn ${sortBy === 'price-asc' ? 'active' : ''}`}
-            onClick={() => setSortBy('price-asc')}
-          >
-            {t('sort.priceAsc')}
-          </button>
-          <button 
-            className={`filter-btn ${sortBy === 'price-desc' ? 'active' : ''}`}
-            onClick={() => setSortBy('price-desc')}
-          >
-            {t('sort.priceDesc')}
-          </button>
-        </div>
-      </div>
-
-      <main>
-        {/* Loading State */}
-        {status === 'loading' && (
-          <div className="product-grid">
+      {/* ===== Product Grid (GAS catalog) ===== */}
+      {status === 'loading' && (
+        <section className="mx-auto max-w-6xl px-4 pb-24 sm:px-6">
+          <div className="grid grid-cols-1 gap-x-6 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
           </div>
-        )}
+        </section>
+      )}
 
-        {/* Error State */}
-        {status === 'error' && (
+      {status === 'error' && (
+        <section className="mx-auto max-w-6xl px-4 pb-24 sm:px-6 text-center">
           <div className="status error" style={{ textAlign: 'center', padding: '40px 0' }}>
             <p>{t('errors.loadItems')}</p>
             <button className="btn" style={{ marginTop: 12 }} onClick={() => { setStatus('loading'); window.location.reload(); }}>
               ↻
             </button>
           </div>
-        )}
+        </section>
+      )}
 
-        {/* Products Grid */}
-        {status === 'ready' && (
-          sortedItems.length > 0 ? (
-            <div className="product-grid">
-              {sortedItems.map((it) => (
-                <ProductCard 
-                  key={it.id || it.title} 
-                  item={it} 
-                />
-              ))}
-            </div>
-          ) : (
+      {status === 'ready' && (
+        filteredItems.length > 0 ? (
+          <JewelryGrid
+            items={filteredItems}
+            title={isDefaultView ? "Découvrir la collection One Day Only" : catParam}
+          />
+        ) : (
+          <section className="mx-auto max-w-6xl px-4 pb-24 sm:px-6 text-center">
             <div className="status" style={{ textAlign: 'center', padding: '40px 0' }}>
               {t('search.noResults')}
             </div>
-          )
-        )}
-      </main>
+          </section>
+        )
+      )}
+
+      {/* ===== Landing bottom sections (default view only) ===== */}
+      {isDefaultView && (
+        <>
+          <Categories />
+          <AllCollections />
+          <BrandStory />
+          <Contact />
+        </>
+      )}
     </>
   );
 }

@@ -10,7 +10,7 @@ import { useTranslation } from '../lib/i18n/context';
 import { useCart } from './CartProvider';
 import useFocusTrap from '../lib/useFocusTrap';
 
-const CATEGORY_IDS = ['all', 'femme', 'homme'];
+const CATEGORY_IDS = ['all', 'Collier', 'Bracelet', "Boucles d'oreille", 'Bague', 'Parure'];
 
 export default function MenuOverlay({ open, onClose }) {
   const { t } = useTranslation();
