@@ -1,11 +1,11 @@
 /**
- * middleware.js - Refreshes Supabase auth session on every request.
+ * proxy.js - Refreshes Supabase auth session on every request.
  * Uses @supabase/ssr createServerClient for proper cookie handling.
  */
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 
-export async function middleware(request) {
+export async function proxy(request) {
   // Skip middleware if Supabase env vars are not configured
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
