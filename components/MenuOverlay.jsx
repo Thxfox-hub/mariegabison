@@ -10,15 +10,9 @@ import Link from 'next/link';
 import { useTranslation } from '../lib/i18n/context';
 import { useCart } from './CartProvider';
 import useFocusTrap from '../lib/useFocusTrap';
+import { FLAGS } from './FlagIcons';
 
 const CATEGORY_IDS = ['all', 'Collier', 'Bracelet', "Boucles d'oreille", 'Bague', 'Parure'];
-
-const FLAGS = {
-  fr: '🇫🇷',
-  en: '🇬🇧',
-  it: '🇮🇹',
-  ru: '🇷🇺',
-};
 
 export default function MenuOverlay({ open, onClose, onCartClick }) {
   const { t, lang, setLang, supported } = useTranslation();
@@ -126,7 +120,7 @@ export default function MenuOverlay({ open, onClose, onCartClick }) {
                   }}
                   aria-label={t(`lang.${l}`)}
                 >
-                  <span style={{ fontSize: 18, lineHeight: 1 }}>{FLAGS[l] || '🏳️'}</span>
+                  <span style={{ display: 'inline-flex', lineHeight: 1 }}>{FLAGS[l]}</span>
                   <span style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.18em' }}>{l}</span>
                 </button>
               ))}

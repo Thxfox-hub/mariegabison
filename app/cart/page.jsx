@@ -353,14 +353,14 @@ export default function CartPage() {
                   <input className="input" type="email" placeholder={t('checkout.email')} value={email} onChange={(e) => setEmail(e.target.value)} />
                   <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 8, alignItems: 'center' }}>
                     <select className="select" value={phoneCountry} onChange={(e) => setPhoneCountry(e.target.value)} style={{ width: 'auto' }} aria-label="Indicatif pays">
-                      <option value="FR">🇫🇷 +33</option>
-                      <option value="BE">🇧🇪 +32</option>
-                      <option value="DE">🇩🇪 +49</option>
-                      <option value="ES">🇪🇸 +34</option>
-                      <option value="IT">🇮🇹 +39</option>
-                      <option value="NL">🇳🇱 +31</option>
-                      <option value="GB">🇬🇧 +44</option>
-                      <option value="US">🇺🇸 +1</option>
+                      <option value="FR">FR +33</option>
+                      <option value="BE">BE +32</option>
+                      <option value="DE">DE +49</option>
+                      <option value="ES">ES +34</option>
+                      <option value="IT">IT +39</option>
+                      <option value="NL">NL +31</option>
+                      <option value="GB">GB +44</option>
+                      <option value="US">US +1</option>
                     </select>
                     <input className="input" placeholder={t('checkout.phone')} value={phoneNational} onChange={(e) => setPhoneNational(e.target.value)} style={{ width: '100%' }} />
                   </div>

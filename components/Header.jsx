@@ -9,40 +9,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTranslation } from '../lib/i18n/context';
-
-// SVG flags — work on all browsers without emoji font support
-const FLAGS = {
-  fr: (
-    <svg width="20" height="14" viewBox="0 0 30 20" style={{ borderRadius: 2, display: 'inline-block', verticalAlign: 'middle' }}>
-      <rect width="10" height="20" fill="#0055A4" />
-      <rect x="10" width="10" height="20" fill="#fff" />
-      <rect x="20" width="10" height="20" fill="#EF4135" />
-    </svg>
-  ),
-  en: (
-    <svg width="20" height="14" viewBox="0 0 60 40" style={{ borderRadius: 2, display: 'inline-block', verticalAlign: 'middle' }}>
-      <rect width="60" height="40" fill="#012169" />
-      <path d="M0,0 L60,40 M60,0 L0,40" stroke="#fff" strokeWidth="8" />
-      <path d="M0,0 L60,40 M60,0 L0,40" stroke="#C8102E" strokeWidth="4" />
-      <path d="M30,0 V40 M0,20 H60" stroke="#fff" strokeWidth="10" />
-      <path d="M30,0 V40 M0,20 H60" stroke="#C8102E" strokeWidth="6" />
-    </svg>
-  ),
-  it: (
-    <svg width="20" height="14" viewBox="0 0 30 20" style={{ borderRadius: 2, display: 'inline-block', verticalAlign: 'middle' }}>
-      <rect width="10" height="20" fill="#009246" />
-      <rect x="10" width="10" height="20" fill="#fff" />
-      <rect x="20" width="10" height="20" fill="#CE2B37" />
-    </svg>
-  ),
-  ru: (
-    <svg width="20" height="14" viewBox="0 0 30 20" style={{ borderRadius: 2, display: 'inline-block', verticalAlign: 'middle' }}>
-      <rect width="30" height="6.67" fill="#fff" />
-      <rect y="6.67" width="30" height="6.67" fill="#0039A6" />
-      <rect y="13.33" width="30" height="6.67" fill="#D52B1E" />
-    </svg>
-  ),
-};
+import { FLAGS } from './FlagIcons';
 
 export default function Header({ cartCount = 0, onCartClick, onMenuClick, onLoginClick, onHelpClick }) {
   const { t, lang, setLang, supported } = useTranslation();
@@ -165,7 +132,7 @@ export default function Header({ cartCount = 0, onCartClick, onMenuClick, onLogi
                 onClick={() => setLangOpen(!langOpen)}
                 aria-label={t('nav.language')}
               >
-                <span className="text-base leading-none">{FLAGS[lang] || '🏳️'}</span>
+                <span className="leading-none">{FLAGS[lang]}</span>
                 <span className="hidden sm:inline">{lang.toUpperCase()}</span>
               </button>
               {langOpen && (
@@ -176,7 +143,7 @@ export default function Header({ cartCount = 0, onCartClick, onMenuClick, onLogi
                       className={`flex items-center gap-2 w-full px-3 py-1.5 text-left font-sans text-[10px] font-light uppercase tracking-[0.18em] transition hover:bg-pearl ${l === lang ? 'text-ink' : 'text-ink-soft'}`}
                       onClick={() => { setLang(l); setLangOpen(false); }}
                     >
-                      <span className="text-base leading-none">{FLAGS[l] || '🏳️'}</span>
+                      <span className="leading-none">{FLAGS[l]}</span>
                       <span>{l.toUpperCase()}</span>
                     </button>
                   ))}
