@@ -32,8 +32,11 @@ export default function Categories() {
 function RippleLink({ href, name, description, t }) {
   const ref = useRef(null);
   const [ripple, setRipple] = useState({ x: 0, y: 0, visible: false });
+  const [touched, setTouched] = useState(false);
 
   const handleMouseMove = (e) => {
+    // Only on devices with hover (desktop)
+    if (touched) return;
     const el = ref.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();
@@ -48,40 +51,61 @@ function RippleLink({ href, name, description, t }) {
     setRipple((prev) => ({ ...prev, visible: false }));
   };
 
+  // On mobile: detect touch start, show ripple from center, hide on touch end
+  const handleTouchStart = (e) => {
+    setTouched(true);
+    const el = ref.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const touch = e.touches?.[0];
+    const x = touch ? touch.clientX - rect.left : rect.width / 2;
+    const y = touch ? touch.clientY - rect.top : rect.height / 2;
+    setRipple({ x, y, visible: true });
+  };
+
+  const handleTouchEnd = () => {
+    setRipple((prev) => ({ ...prev, visible: false }));
+    // Reset touched flag after a delay so mouse events work again if switching devices
+    setTimeout(() => setTouched(false), 500);
+  };
+
   return (
     <Link
       ref={ref}
       href={href}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={handleTouchEnd}
       className="group relative overflow-hidden bg-blanc px-8 py-12 text-center"
     >
-      {/* Ripple overlay — cercle marron qui s'étend depuis la souris */}
+      {/* Ripple overlay — cercle marron foncé qui s'étend depuis la souris/doigt */}
       <span
         aria-hidden
         className="pointer-events-none absolute"
         style={{
           left: ripple.x,
           top: ripple.y,
-          width: ripple.visible ? "500px" : "0px",
-          height: ripple.visible ? "500px" : "0px",
+          width: ripple.visible ? "800px" : "0px",
+          height: ripple.visible ? "800px" : "0px",
           borderRadius: "50%",
-          background: "#8b7355",
+          background: "#5c4a35",
           transform: "translate(-50%, -50%)",
-          transition: "width 0.5s ease-out, height 0.5s ease-out, opacity 0.4s ease-out",
+          transition: "width 0.6s ease-out, height 0.6s ease-out, opacity 0.4s ease-out",
           opacity: ripple.visible ? 1 : 0,
         }}
       />
 
       {/* Contenu au-dessus du ripple */}
-      <div className="relative transition-colors duration-300 group-hover:text-blanc">
-        <h3 className="font-serif text-2xl font-light tracking-[0.06em] text-ink transition-colors duration-300 group-hover:text-blanc">
+      <div className="relative transition-colors duration-300 group-hover:text-blanc group-active:text-blanc">
+        <h3 className="font-serif text-2xl font-light tracking-[0.06em] text-ink transition-colors duration-300 group-hover:text-blanc group-active:text-blanc">
           {name}
         </h3>
-        <p className="mt-4 font-sans text-[12px] font-light leading-relaxed text-ink-soft transition-colors duration-300 group-hover:text-blanc/80">
+        <p className="mt-4 font-sans text-[12px] font-light leading-relaxed text-ink-soft transition-colors duration-300 group-hover:text-blanc/80 group-active:text-blanc/80">
           {description}
         </p>
-        <span className="mt-6 inline-block font-sans text-[10px] font-light uppercase tracking-[0.28em] text-ink/50 transition-colors duration-300 group-hover:text-blanc">
+        <span className="mt-6 inline-block font-sans text-[10px] font-light uppercase tracking-[0.28em] text-ink/50 transition-colors duration-300 group-hover:text-blanc group-active:text-blanc">
           {t('landing.explore')}
         </span>
       </div>

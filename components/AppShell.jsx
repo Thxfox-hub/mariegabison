@@ -35,6 +35,7 @@ export default function AppShell({ children }) {
       <MenuOverlay
         open={menuOpen}
         onClose={() => setMenuOpen(false)}
+        onCartClick={() => setDrawerOpen(true)}
       />
       <LoginModal
         open={loginOpen}
