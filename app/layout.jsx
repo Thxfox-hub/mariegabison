@@ -1,13 +1,30 @@
 /**
  * layout.jsx - Marie Gabison Bijoux
  * Root layout with cart context, i18n, and app shell
+ * Fonts are self-hosted via next/font (no external CDN dependency)
  */
 import './globals.css';
+import { Cormorant_Garamond, Jost } from 'next/font/google';
 import { CartProvider } from '../components/CartProvider';
 import { I18nProvider } from '../lib/i18n/context';
 import { UserProvider } from '../components/UserProvider';
 import Footer from '../components/Footer';
 import AppShell from '../components/AppShell';
+
+const cormorant = Cormorant_Garamond({
+  subsets: ['latin'],
+  weight: ['300', '400', '500'],
+  style: ['normal', 'italic'],
+  variable: '--font-serif',
+  display: 'swap',
+});
+
+const jost = Jost({
+  subsets: ['latin'],
+  weight: ['200', '300', '400', '500'],
+  variable: '--font-sans',
+  display: 'swap',
+});
 
 export const metadata = {
   title: 'Marie Gabison Paris — Bijoux d\'exception depuis 1996',
@@ -16,14 +33,16 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="fr" suppressHydrationWarning>
+    <html lang="fr" suppressHydrationWarning className={`${cormorant.variable} ${jost.variable}`}>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@200;300;400;500&display=swap"
-          rel="stylesheet"
-        />
+        {/* Unregister any stale service workers from previous sessions */}
+        <script dangerouslySetInnerHTML={{ __html: `
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations()
+              .then(function(regs) { regs.forEach(function(r) { r.unregister(); }); })
+              .catch(function() {});
+          }
+        `}} />
       </head>
       <body>
         <I18nProvider>

@@ -34,8 +34,21 @@ function RippleLink({ href, name, description, t }) {
   const [ripple, setRipple] = useState({ x: 0, y: 0, visible: false });
   const [touched, setTouched] = useState(false);
 
+  // On mouse enter: show ripple from center immediately
+  const handleMouseEnter = (e) => {
+    if (touched) return;
+    const el = ref.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    setRipple({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+      visible: true,
+    });
+  };
+
+  // On mouse move: update ripple position
   const handleMouseMove = (e) => {
-    // Only on devices with hover (desktop)
     if (touched) return;
     const el = ref.current;
     if (!el) return;
@@ -51,7 +64,7 @@ function RippleLink({ href, name, description, t }) {
     setRipple((prev) => ({ ...prev, visible: false }));
   };
 
-  // On mobile: detect touch start, show ripple from center, hide on touch end
+  // On mobile: touch shows ripple, touch end hides it
   const handleTouchStart = (e) => {
     setTouched(true);
     const el = ref.current;
@@ -65,7 +78,6 @@ function RippleLink({ href, name, description, t }) {
 
   const handleTouchEnd = () => {
     setRipple((prev) => ({ ...prev, visible: false }));
-    // Reset touched flag after a delay so mouse events work again if switching devices
     setTimeout(() => setTouched(false), 500);
   };
 
@@ -73,6 +85,7 @@ function RippleLink({ href, name, description, t }) {
     <Link
       ref={ref}
       href={href}
+      onMouseEnter={handleMouseEnter}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       onTouchStart={handleTouchStart}
@@ -97,15 +110,15 @@ function RippleLink({ href, name, description, t }) {
         }}
       />
 
-      {/* Contenu au-dessus du ripple */}
-      <div className="relative transition-colors duration-300 group-hover:text-blanc group-active:text-blanc">
-        <h3 className="font-serif text-2xl font-light tracking-[0.06em] text-ink transition-colors duration-300 group-hover:text-blanc group-active:text-blanc">
+      {/* Contenu — texte devient blanc quand le ripple est visible */}
+      <div className="relative transition-colors duration-300" style={{ color: ripple.visible ? '#fff' : undefined }}>
+        <h3 className="font-serif text-2xl font-light tracking-[0.06em] text-ink transition-colors duration-300" style={{ color: ripple.visible ? '#fff' : undefined }}>
           {name}
         </h3>
-        <p className="mt-4 font-sans text-[12px] font-light leading-relaxed text-ink-soft transition-colors duration-300 group-hover:text-blanc/80 group-active:text-blanc/80">
+        <p className="mt-4 font-sans text-[12px] font-light leading-relaxed text-ink-soft transition-colors duration-300" style={{ color: ripple.visible ? 'rgba(255,255,255,0.8)' : undefined }}>
           {description}
         </p>
-        <span className="mt-6 inline-block font-sans text-[10px] font-light uppercase tracking-[0.28em] text-ink/50 transition-colors duration-300 group-hover:text-blanc group-active:text-blanc">
+        <span className="mt-6 inline-block font-sans text-[10px] font-light uppercase tracking-[0.28em] text-ink/50 transition-colors duration-300" style={{ color: ripple.visible ? '#fff' : undefined }}>
           {t('landing.explore')}
         </span>
       </div>

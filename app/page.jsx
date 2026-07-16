@@ -7,7 +7,7 @@
  */
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState, useRef } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import SkeletonCard from '../components/SkeletonCard';
@@ -37,13 +37,17 @@ function HomeContent() {
 
   const [items, setItems] = useState([]);
   const [status, setStatus] = useState('loading');
+  const fetchedRef = useRef(false);
 
   useEffect(() => {
+    if (fetchedRef.current) return; // Prevent re-fetch loop
+    fetchedRef.current = true;
+
     const controller = new AbortController();
     async function load() {
       try {
-        setStatus('loading');
-        // Try cache first
+        // 1. Show cached data immediately (instant render)
+        let hasCache = false;
         try {
           const cached = localStorage.getItem('mariegabison_catalog');
           if (cached) {
@@ -51,25 +55,30 @@ function HomeContent() {
             if (Array.isArray(arr) && arr.length > 0) {
               setItems(arr);
               setStatus('ready');
+              hasCache = true;
             }
           }
         } catch {}
 
-        // Fetch from API (Google Apps Script)
-        const res = await fetch('/api/catalog', { signal: controller.signal, cache: 'no-store' });
+        // 2. Always fetch fresh data in background (stale-while-revalidate)
+        if (!hasCache) setStatus('loading');
+        const res = await fetch('/api/catalog', { signal: controller.signal });
         if (res.ok) {
           const data = await res.json();
           const arr = Array.isArray(data) ? data : data.data || data.items || [];
-          setItems(arr);
-          setStatus('ready');
-          try { localStorage.setItem('mariegabison_catalog', JSON.stringify(arr)); } catch {}
-        } else {
+          if (arr.length > 0) {
+            setItems(arr);
+            setStatus('ready');
+            try { localStorage.setItem('mariegabison_catalog', JSON.stringify(arr)); } catch {}
+          }
+        } else if (!hasCache) {
           throw new Error('API error');
         }
+        // If fetch fails but we have cache, keep showing cache (no error)
       } catch (e) {
         if (e.name !== 'AbortError') {
           console.error(e);
-          if (items.length === 0) setStatus('error');
+          if (!hasCache) setStatus('error');
         }
       }
     }
@@ -123,7 +132,7 @@ function HomeContent() {
       {status === 'loading' && (
         <section className="mx-auto max-w-6xl px-4 pb-24 sm:px-6">
           <div className="grid grid-cols-1 gap-x-6 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
-            {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
+            <SkeletonCard key={0} />
           </div>
         </section>
       )}

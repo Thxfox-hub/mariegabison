@@ -14,7 +14,6 @@ import Link from 'next/link';
 import { useCart } from '../../../components/CartProvider';
 import { useTranslation } from '../../../lib/i18n/context';
 import { animateToCart } from '../../../lib/animateToCart';
-import BackButton from '../../../components/BackButton';
 
 const PLACEHOLDER_IMAGES = [
   'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=800&q=80',
@@ -255,25 +254,45 @@ export default function ProductPage() {
               {added && <span className="product-added-badge">{t('product.added')}</span>}
             </div>
 
-            {/* Action buttons */}
-            <div className="product-actions">
-              <button className="btn primary product-action-btn" onClick={handleAdd}>
-                {t('product.addToCart')}
-              </button>
-              <button className="btn product-action-btn" onClick={handleBuyNow}>
-                {t('product.buyNow')}
-              </button>
-              <a
-                className="btn product-action-btn"
-                href="https://www.instagram.com/maisonmariegabison/"
-                target="_blank"
-                rel="noreferrer noopener"
+            {/* Action buttons — horizontal layout: left=back, right=instagram */}
+            <div className="product-actions" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+              {/* Left: back to shop */}
+              <button
+                type="button"
+                onClick={() => router.push('/')}
+                className="inline-flex items-center gap-2 border border-ink/20 px-6 py-3 font-sans text-[10px] font-light uppercase tracking-[0.28em] text-ink transition hover:border-ink"
               >
-                {t('product.contactInstagram')}
-              </a>
-            </div>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path d="M15 18l-6-6 6-6"/>
+                </svg>
+                {t('product.backToShop')}
+              </button>
 
-            <BackButton onClick={() => router.push('/')} label={t('product.backToShop')} />
+              {/* Right: add to cart + instagram */}
+              <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                <button className="btn primary product-action-btn" onClick={handleAdd} style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path d="M6 6h12l1 14H5L6 6z"/>
+                    <path d="M9 6V4a3 3 0 0 1 6 0v2"/>
+                  </svg>
+                  {t('product.addToCart')}
+                </button>
+                <a
+                  className="inline-flex items-center gap-2 border border-ink/20 px-6 py-3 font-sans text-[10px] font-light uppercase tracking-[0.28em] text-ink transition hover:border-ink"
+                  href="https://www.instagram.com/maisonmariegabison/"
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  aria-label={t('product.contactInstagram')}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2" y="2" width="20" height="20" rx="5"/>
+                    <circle cx="12" cy="12" r="4.5"/>
+                    <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/>
+                  </svg>
+                  <span className="hidden sm:inline">{t('product.contactInstagram')}</span>
+                </a>
+              </div>
+            </div>
           </div>
         </div>
       </div>

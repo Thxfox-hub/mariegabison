@@ -122,8 +122,8 @@ let CATALOG_CACHE = {
   items: null,
 };
 
-const DEFAULT_TTL_MS = Number(process.env.CATALOG_TTL_SECONDS || 60) * 1000;
-const FETCH_TIMEOUT_MS = Number(process.env.CATALOG_FETCH_TIMEOUT_MS || 10000);
+const DEFAULT_TTL_MS = Number(process.env.CATALOG_TTL_SECONDS || 300) * 1000;
+const FETCH_TIMEOUT_MS = Number(process.env.CATALOG_FETCH_TIMEOUT_MS || 8000);
 
 async function fetchFromGAS(url) {
   const controller = new AbortController();

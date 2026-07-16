@@ -25,14 +25,16 @@
   --gold-dark: #7d6a48;
   --noir: #0a0a0a;
   --blanc: #ffffff;
-  --font-serif: 'Cormorant Garamond', Georgia, serif;
-  --font-sans: 'Jost', system-ui, sans-serif;
-  --font-logo: 'Cormorant Garamond', Georgia, serif;
+  /* Fonts are injected by next/font via CSS variables on <html> */
+  --font-logo: var(--font-serif, 'Cormorant Garamond', Georgia, serif);
 }
 
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
-html,body{height:100%}
+/* Hide scrollbar but keep scroll functionality */
+::-webkit-scrollbar{width:0;height:0;background:transparent}
+*{scrollbar-width:none;scrollbar-color:transparent transparent}
+*::-webkit-scrollbar-thumb{background:transparent}
 body{
   font-family:var(--font-sans);
   background:var(--ivory);

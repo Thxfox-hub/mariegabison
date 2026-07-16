@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Header from "./Header";
 import CartDrawer from "./CartDrawer";
 import AppointmentModal from "./AppointmentModal";
@@ -16,6 +16,15 @@ export default function AppShell({ children }) {
   const [loginOpen, setLoginOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [appointmentOpen, setAppointmentOpen] = useState(false);
+
+  // Unregister any stale service workers from previous sessions
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations()
+        .then((regs) => regs.forEach((r) => r.unregister()))
+        .catch(() => {});
+    }
+  }, []);
 
   return (
     <>
