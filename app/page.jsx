@@ -107,7 +107,7 @@ function HomeContent() {
             href="/"
             className="inline-block font-sans text-[10px] font-light uppercase tracking-[0.32em] text-ink-soft underline decoration-ink/15 underline-offset-6 transition hover:text-ink hover:decoration-ink/40"
           >
-            ← Retour
+            ← {t('nav.back')}
           </Link>
           <p className="mt-6 font-sans text-[10px] font-light uppercase tracking-[0.48em] text-ink-soft">
             {t('search.sectionTitle')}
@@ -143,7 +143,7 @@ function HomeContent() {
         filteredItems.length > 0 ? (
           <JewelryGrid
             items={filteredItems}
-            title={isDefaultView ? "Découvrir la collection One Day Only" : catParam}
+            title={isDefaultView ? t('landing.discoverCollection') : catParam}
           />
         ) : (
           <section className="mx-auto max-w-6xl px-4 pb-24 sm:px-6 text-center">

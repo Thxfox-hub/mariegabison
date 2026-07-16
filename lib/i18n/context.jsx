@@ -60,10 +60,14 @@ export function I18nProvider({ children }) {
     try { localStorage.setItem(STORAGE_KEY, newLang); } catch {}
   }, []);
 
-  const t = useCallback((key, fallback) => {
-    const val = getNestedValue(messages, key);
-    if (val !== undefined) return val;
-    return fallback ?? key;
+  const t = useCallback((key, vars) => {
+    let val = getNestedValue(messages, key);
+    if (val === undefined) return typeof vars === 'string' ? vars : key;
+    // Interpolate {var} placeholders
+    if (vars && typeof vars === 'object') {
+      val = String(val).replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? '');
+    }
+    return val;
   }, [messages]);
 
   return (

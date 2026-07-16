@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslation } from "../../lib/i18n/context";
+
 const InstagramIcon = ({ className = "" }) => (
   <svg className={className} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
     <rect x="2" y="2" width="20" height="20" rx="5" />
@@ -23,6 +25,7 @@ const WhatsAppIcon = ({ className = "" }) => (
 );
 
 export default function Contact() {
+  const { t } = useTranslation();
   const whatsappNumber = "33783882052";
   const whatsappUrl = `https://wa.me/${whatsappNumber}`;
   const instagramUrl = "https://www.instagram.com/maisonmariegabison/";
@@ -32,24 +35,22 @@ export default function Contact() {
     <section id="contact" className="px-6 py-24 text-center">
       <div className="mx-auto max-w-xl animate-fade-up">
         <p className="font-sans text-[10px] font-light uppercase tracking-[0.42em] text-ink-soft">
-          Accompagnement privé
+          {t('landing.contactLabel')}
         </p>
         <h2 className="mt-4 font-serif text-3xl font-light tracking-[0.06em] text-ink sm:text-4xl">
-          Contacter un conseiller
+          {t('landing.contactTitle')}
         </h2>
         <div className="mx-auto mt-6 h-px w-10 bg-ink/20" />
 
         <p className="mt-9 font-sans text-[13px] font-light leading-[1.9] text-ink-soft">
-          Pour acquérir un modèle unique, une édition limitée, ou
-          envisager une création sur-mesure à Paris, vous pouvez nous contacter
-          par email à{" "}
+          {t('landing.contactDesc1')}{" "}
           <a
             href={`mailto:${email}`}
             className="text-ink underline decoration-ink/20 underline-offset-4 transition hover:decoration-ink"
           >
             {email}
           </a>{" "}
-          ou nous joindre sur WhatsApp au{" "}
+          {t('landing.contactDesc2')}{" "}
           <a
             href={whatsappUrl}
             target="_blank"
@@ -62,7 +63,7 @@ export default function Contact() {
         </p>
 
         <p className="mt-5 font-sans text-[11px] font-light leading-relaxed tracking-[0.04em] text-ink-soft/80">
-          Le sur-mesure se réalise uniquement sur rendez-vous à Paris.
+          {t('landing.contactNote')}
         </p>
 
         {/* Social icons */}
@@ -100,7 +101,7 @@ export default function Contact() {
             className="inline-flex min-w-[230px] items-center justify-center gap-2.5 bg-ink px-8 py-3.5 font-sans text-[10px] font-light uppercase tracking-[0.28em] text-blanc transition hover:bg-ink/85"
           >
             <MailIcon className="!w-4 !h-4" />
-            Écrire par email
+            {t('landing.writeEmail')}
           </a>
           <a
             href={whatsappUrl}

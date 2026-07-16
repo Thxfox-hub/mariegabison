@@ -1,8 +1,162 @@
 "use client";
 
 import * as Dialog from "@radix-ui/react-dialog";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from '../lib/i18n/context';
+
+/**
+ * AddressAutocomplete — single address field with live suggestions.
+ * Uses /api/address/search (Nominatim proxy) to fetch suggestions as you type.
+ * On select, auto-fills street, city, postal_code, country.
+ */
+function AddressAutocomplete({ value, onSelect, country, placeholder }) {
+  const [query, setQuery] = useState(value || '');
+  const [suggestions, setSuggestions] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [highlightIdx, setHighlightIdx] = useState(-1);
+  const containerRef = useRef(null);
+  const debounceRef = useRef(null);
+  const blurTimerRef = useRef(null);
+
+  // Sync external value changes
+  useEffect(() => {
+    if (value !== query) setQuery(value || '');
+  }, [value]);
+
+  // Debounced search
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (!query || query.trim().length < 3) {
+      setSuggestions([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const params = new URLSearchParams({ q: query.trim() });
+        if (country) params.set('country', country);
+        const res = await fetch(`/api/address/search?${params}`);
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setSuggestions(data);
+          setOpen(true);
+        }
+      } catch {
+        setSuggestions([]);
+      } finally {
+        setLoading(false);
+      }
+    }, 300);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [query, country]);
+
+  // Close on outside click
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  const handleSelect = (s) => {
+    setQuery(s.label || `${s.street}, ${s.postal_code} ${s.city}, ${s.country}`);
+    setOpen(false);
+    setHighlightIdx(-1);
+    onSelect({
+      street: s.street || '',
+      city: s.city || '',
+      postal_code: s.postal_code || '',
+      country: s.country || country || 'FR',
+    });
+  };
+
+  const handleKeyDown = (e) => {
+    if (!open || suggestions.length === 0) return;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setHighlightIdx(i => Math.min(i + 1, suggestions.length - 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setHighlightIdx(i => Math.max(i - 1, 0));
+    } else if (e.key === 'Enter' && highlightIdx >= 0) {
+      e.preventDefault();
+      handleSelect(suggestions[highlightIdx]);
+    } else if (e.key === 'Escape') {
+      setOpen(false);
+    }
+  };
+
+  return (
+    <div ref={containerRef} style={{ position: 'relative' }}>
+      <input
+        className="input"
+        placeholder={placeholder}
+        value={query}
+        onChange={(e) => { setQuery(e.target.value); setOpen(true); setHighlightIdx(-1); }}
+        onKeyDown={handleKeyDown}
+        onFocus={() => { if (suggestions.length) setOpen(true); }}
+        onBlur={() => { blurTimerRef.current = setTimeout(() => setOpen(false), 150); }}
+        aria-expanded={open}
+        role="combobox"
+        aria-autocomplete="list"
+      />
+      {loading && (
+        <div style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 11, color: '#999' }}>
+          ⌛
+        </div>
+      )}
+      {open && suggestions.length > 0 && (
+        <ul
+          role="listbox"
+          style={{
+            position: 'absolute',
+            top: '100%',
+            left: 0,
+            right: 0,
+            zIndex: 100,
+            background: '#fff',
+            border: '1px solid #e5e0d8',
+            borderTop: 'none',
+            maxHeight: 200,
+            overflowY: 'auto',
+            margin: 0,
+            padding: 0,
+            listStyle: 'none',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+          }}
+        >
+          {suggestions.map((s, i) => (
+            <li
+              key={i}
+              role="option"
+              aria-selected={i === highlightIdx}
+              onMouseDown={(e) => { e.preventDefault(); handleSelect(s); }}
+              onMouseEnter={() => setHighlightIdx(i)}
+              style={{
+                padding: '10px 14px',
+                cursor: 'pointer',
+                fontSize: 13,
+                lineHeight: 1.4,
+                background: i === highlightIdx ? '#f4f1ea' : '#fff',
+                borderBottom: i < suggestions.length - 1 ? '1px solid #f0ede8' : 'none',
+                color: '#2a2520',
+                fontFamily: 'Jost, sans-serif',
+              }}
+            >
+              {s.label}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
 
 export default function CheckoutModal({ open, onClose, items = [], total = 0, address = null, shippingOption = null }) {
   const { t, lang } = useTranslation();
@@ -10,6 +164,7 @@ export default function CheckoutModal({ open, onClose, items = [], total = 0, ad
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [addr, setAddr] = useState({ country: "FR", postal_code: "", city: "", street: "" });
+  const [addrQuery, setAddrQuery] = useState("");
   const [copied, setCopied] = useState(false);
   const [sendState, setSendState] = useState("idle"); // idle | sending | sent | error
   const [sendError, setSendError] = useState(null);
@@ -38,6 +193,9 @@ export default function CheckoutModal({ open, onClose, items = [], total = 0, ad
           city: v?.city || "",
           street: v?.street || "",
         });
+        if (v?.street) {
+          setAddrQuery(`${v.street}, ${v.postal_code || ''} ${v.city || ''}, ${v.country || 'FR'}`.trim());
+        }
       } else if (address) {
         setAddr({
           country: address.country || "FR",
@@ -169,23 +327,41 @@ export default function CheckoutModal({ open, onClose, items = [], total = 0, ad
             <div className="modal-section" style={{ gridColumn: '1 / -1' }}>
               <p style={{ marginTop: 0, color: '#555' }}>{t('checkout.noAccountNeeded')}</p>
               <div style={{ display: 'grid', gap: 8, margin: '12px 0' }}>
+                {/* Nom + prénom — champ unique */}
                 <input className="input" placeholder={t('checkout.name')} value={name} onChange={(e) => setName(e.target.value)} />
-                <input className="input" type="email" placeholder={t('checkout.email')} value={email} onChange={(e) => setEmail(e.target.value)} />
-                <input className="input" placeholder={t('checkout.phone')} value={phone} onChange={(e) => setPhone(e.target.value)} />
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                  <select className="select" value={addr.country} onChange={(e) => setAddr(a => ({ ...a, country: e.target.value }))}>
-                    <option value="FR">{t('countries.FR')}</option>
-                    <option value="BE">{t('countries.BE')}</option>
-                    <option value="DE">{t('countries.DE')}</option>
-                    <option value="ES">{t('countries.ES')}</option>
-                    <option value="IT">{t('countries.IT')}</option>
-                    <option value="NL">{t('countries.NL')}</option>
-                    <option value="GB">{t('countries.GB')}</option>
-                    <option value="US">{t('countries.US')}</option>
-                  </select>
-                  <input className="input" placeholder={t('checkout.postalCode')} value={addr.postal_code} onChange={(e) => setAddr(a => ({ ...a, postal_code: e.target.value }))} />
+                  <input className="input" type="email" placeholder={t('checkout.email')} value={email} onChange={(e) => setEmail(e.target.value)} />
+                  <input className="input" placeholder={t('checkout.phone')} value={phone} onChange={(e) => setPhone(e.target.value)} />
                 </div>
-                <input className="input" placeholder={t('checkout.city')} value={addr.city} onChange={(e) => setAddr(a => ({ ...a, city: e.target.value }))} />
+
+                {/* Pays — sélecteur en haut, l'autocomplete filtre par pays */}
+                <select className="select" value={addr.country} onChange={(e) => setAddr(a => ({ ...a, country: e.target.value }))}>
+                  <option value="FR">{t('countries.FR')}</option>
+                  <option value="BE">{t('countries.BE')}</option>
+                  <option value="DE">{t('countries.DE')}</option>
+                  <option value="ES">{t('countries.ES')}</option>
+                  <option value="IT">{t('countries.IT')}</option>
+                  <option value="NL">{t('countries.NL')}</option>
+                  <option value="GB">{t('countries.GB')}</option>
+                  <option value="US">{t('countries.US')}</option>
+                </select>
+
+                {/* Adresse avec autocomplete — suggestions en temps réel */}
+                <AddressAutocomplete
+                  value={addrQuery}
+                  country={addr.country}
+                  placeholder={t('checkout.addressPlaceholder')}
+                  onSelect={(selected) => {
+                    setAddr(selected);
+                    setAddrQuery(`${selected.street}, ${selected.postal_code} ${selected.city}, ${selected.country}`.trim());
+                  }}
+                />
+
+                {/* Champs pré-remplis par l'autocomplete, éditables */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 8 }}>
+                  <input className="input" placeholder={t('checkout.postalCode')} value={addr.postal_code} onChange={(e) => setAddr(a => ({ ...a, postal_code: e.target.value }))} />
+                  <input className="input" placeholder={t('checkout.city')} value={addr.city} onChange={(e) => setAddr(a => ({ ...a, city: e.target.value }))} />
+                </div>
                 <input className="input" placeholder={t('checkout.address')} value={addr.street} onChange={(e) => setAddr(a => ({ ...a, street: e.target.value }))} />
               </div>
 

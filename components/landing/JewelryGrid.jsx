@@ -10,12 +10,13 @@ import { useTranslation } from "../../lib/i18n/context";
  * "Voir plus" navigates to the dedicated product page (/product/[id]).
  * "Acheter" links to the contact section.
  */
-export default function JewelryGrid({ items = [], title = "Découvrir la collection One Day Only" }) {
-  const { lang } = useTranslation();
+export default function JewelryGrid({ items = [], title }) {
+  const { t, lang } = useTranslation();
+  const resolvedTitle = title ?? t('landing.discoverCollection');
 
   const formatPrice = (p) => {
     const n = Number(p);
-    if (!Number.isFinite(n) || n === 0) return "Sur demande";
+    if (!Number.isFinite(n) || n === 0) return t('landing.onRequest');
     const locale = lang === "en" ? "en-US" : lang === "ru" ? "ru-RU" : lang === "it" ? "it-IT" : "fr-FR";
     return new Intl.NumberFormat(locale, { style: "currency", currency: "EUR" }).format(n);
   };
@@ -24,12 +25,10 @@ export default function JewelryGrid({ items = [], title = "Découvrir la collect
     <section id="collection" className="mx-auto max-w-6xl px-4 pb-24 sm:px-6">
       <div className="mb-14 text-center">
         <h2 className="font-serif text-3xl font-light tracking-[0.06em] text-ink sm:text-4xl">
-          {title}
+          {resolvedTitle}
         </h2>
         <p className="mx-auto mt-5 max-w-lg font-sans text-[12px] font-light leading-relaxed tracking-[0.04em] text-ink-soft">
-          Des modèles uniques et des pièces signatures numérotées.
-          Cliquez pour découvrir le détail et être accompagnée pour l&apos;achat
-          ou une création sur-mesure à Paris.
+          {t('landing.gridIntro')}
         </p>
       </div>
 
@@ -56,13 +55,13 @@ export default function JewelryGrid({ items = [], title = "Découvrir la collect
                     href={href}
                     className="w-full border border-blanc/70 bg-blanc/95 px-4 py-3 text-center font-sans text-[10px] font-light uppercase tracking-[0.28em] text-ink backdrop-blur-sm transition hover:bg-blanc"
                   >
-                    Voir plus
+                    {t('landing.seeMore')}
                   </Link>
                   <a
                     href="#contact"
                     className="w-full border border-blanc/40 bg-ink/90 px-4 py-3 text-center font-sans text-[10px] font-light uppercase tracking-[0.28em] text-blanc backdrop-blur-sm transition hover:bg-ink"
                   >
-                    Acheter
+                    {t('landing.buy')}
                   </a>
                 </div>
 
@@ -88,13 +87,13 @@ export default function JewelryGrid({ items = [], title = "Découvrir la collect
                     href={href}
                     className="font-sans text-[10px] font-light uppercase tracking-[0.24em] text-ink-soft underline decoration-ink/15 underline-offset-6 transition hover:text-ink hover:decoration-ink/40"
                   >
-                    Voir plus
+                    {t('landing.seeMore')}
                   </Link>
                   <a
                     href="#contact"
                     className="font-sans text-[10px] font-light uppercase tracking-[0.24em] text-ink underline decoration-ink/25 underline-offset-6 transition hover:decoration-ink"
                   >
-                    Acheter
+                    {t('landing.buy')}
                   </a>
                 </div>
               </div>

@@ -14,6 +14,7 @@ import Link from 'next/link';
 import { useCart } from '../../../components/CartProvider';
 import { useTranslation } from '../../../lib/i18n/context';
 import { animateToCart } from '../../../lib/animateToCart';
+import BackButton from '../../../components/BackButton';
 
 const PLACEHOLDER_IMAGES = [
   'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=800&q=80',
@@ -272,9 +273,7 @@ export default function ProductPage() {
               </a>
             </div>
 
-            <Link href="/" className="product-back-link">
-              {t('product.backToShop')}
-            </Link>
+            <BackButton onClick={() => router.push('/')} label={t('product.backToShop')} />
           </div>
         </div>
       </div>

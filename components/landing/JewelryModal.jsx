@@ -1,13 +1,19 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import BackButton from "../BackButton";
+import { useTranslation } from "../../lib/i18n/context";
 
 /**
  * JewelryModal.jsx - Marie Gabison Paris
- * Editorial modal for static landing carousel pieces.
- * Mirrors the design from wedding-jewelry-landing-page.
+ * Fullscreen modal for static landing carousel pieces.
+ * No scrollbar — content scrolls naturally with a subtle blur gradient
+ * at the bottom to indicate more content below.
  */
 export default function JewelryModal({ piece, onClose }) {
+  const { t } = useTranslation();
+  const scrollRef = useRef(null);
+
   useEffect(() => {
     if (!piece) return;
     const onKey = (e) => {
@@ -25,87 +31,91 @@ export default function JewelryModal({ piece, onClose }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 animate-fade-in"
+      className="fixed inset-0 z-50 bg-blanc animate-fade-in"
       role="dialog"
       aria-modal="true"
       aria-labelledby="jewelry-title"
     >
-      <button
-        type="button"
-        className="absolute inset-0 bg-ink/55 backdrop-blur-[2px]"
-        aria-label="Fermer"
-        onClick={onClose}
-      />
+      {/* Back button — top right */}
+      <div className="fixed right-6 top-6 z-20">
+        <BackButton onClick={onClose} label="Retour" />
+      </div>
 
-      <div className="relative z-10 grid max-h-[92vh] w-full max-w-4xl overflow-y-auto bg-blanc shadow-2xl animate-scale-in md:grid-cols-2 md:overflow-hidden">
-        <div className="relative aspect-[3/4] md:aspect-auto md:min-h-[560px]">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={piece.image}
-            alt={piece.name}
-            className="h-full w-full object-cover"
-          />
-        </div>
+      {/* Scrollable content — no visible scrollbar */}
+      <div
+        ref={scrollRef}
+        className="h-screen w-screen overflow-y-auto"
+        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+      >
+        <style>{`div::-webkit-scrollbar{display:none}`}</style>
 
-        <div className="relative flex flex-col justify-center px-8 py-12 sm:px-12">
-          <button
-            type="button"
-            onClick={onClose}
-            className="absolute right-5 top-5 flex h-9 w-9 items-center justify-center text-ink-soft transition hover:text-ink"
-            aria-label="Fermer"
-          >
-            ✕
-          </button>
+        <div className="grid min-h-screen grid-cols-1 md:grid-cols-2">
+          {/* Image side */}
+          <div className="relative min-h-[50vh] md:min-h-screen">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={piece.image}
+              alt={piece.name}
+              className="h-full w-full object-cover"
+            />
+          </div>
 
-          <p className="font-sans text-[10px] font-light uppercase tracking-[0.38em] text-ink-soft">
-            {piece.category}
-          </p>
-          <h3
-            id="jewelry-title"
-            className="mt-3 font-serif text-3xl font-light tracking-[0.05em] text-ink"
-          >
-            {piece.name}
-          </h3>
-          <div className="mt-5 h-px w-8 bg-ink/20" />
-          <p className="mt-6 font-sans text-[13px] font-light leading-[1.85] text-ink-soft">
-            {piece.description}
-          </p>
-          <p className="mt-5 font-sans text-[11px] font-light uppercase tracking-[0.18em] text-ink">
-            {piece.material}
-          </p>
-          <p className="mt-2 font-sans text-[12px] font-light tracking-[0.08em] text-ink-soft">
-            {piece.price} — {piece.edition}
-          </p>
+          {/* Text side */}
+          <div className="flex flex-col justify-center px-8 py-20 sm:px-12 md:py-24">
+            <p className="font-sans text-[10px] font-light uppercase tracking-[0.38em] text-ink-soft">
+              {piece.category}
+            </p>
+            <h3
+              id="jewelry-title"
+              className="mt-3 font-serif text-3xl font-light tracking-[0.05em] text-ink sm:text-4xl"
+            >
+              {piece.name}
+            </h3>
+            <div className="mt-5 h-px w-8 bg-ink/20" />
 
-          <ul className="mt-7 space-y-2.5">
-            {piece.details.map((detail) => (
-              <li
-                key={detail}
-                className="flex items-start gap-3 font-sans text-[12px] font-light text-ink-soft"
+            <p className="mt-6 font-sans text-[13px] font-light leading-[1.85] text-ink-soft">
+              {piece.description}
+            </p>
+            <p className="mt-5 font-sans text-[11px] font-light uppercase tracking-[0.18em] text-ink">
+              {piece.material}
+            </p>
+            <p className="mt-2 font-sans text-[12px] font-light tracking-[0.08em] text-ink-soft">
+              {piece.price} — {piece.edition}
+            </p>
+
+            <ul className="mt-7 space-y-2.5">
+              {piece.details.map((detail) => (
+                <li
+                  key={detail}
+                  className="flex items-start gap-3 font-sans text-[12px] font-light text-ink-soft"
+                >
+                  <span className="mt-2 h-px w-3 shrink-0 bg-ink/30" />
+                  {detail}
+                </li>
+              ))}
+            </ul>
+
+            <div className="mt-10 flex flex-wrap gap-3">
+              <a
+                href="#contact"
+                onClick={onClose}
+                className="inline-flex bg-ink px-7 py-3.5 font-sans text-[10px] font-light uppercase tracking-[0.28em] text-blanc transition hover:bg-ink/85"
               >
-                <span className="mt-2 h-px w-3 shrink-0 bg-ink/30" />
-                {detail}
-              </li>
-            ))}
-          </ul>
-
-          <div className="mt-10 flex flex-wrap gap-3">
-            <a
-              href="#contact"
-              onClick={onClose}
-              className="inline-flex bg-ink px-7 py-3.5 font-sans text-[10px] font-light uppercase tracking-[0.28em] text-blanc transition hover:bg-ink/85"
-            >
-              Acheter
-            </a>
-            <a
-              href="#contact"
-              onClick={onClose}
-              className="inline-flex border border-ink/20 px-7 py-3.5 font-sans text-[10px] font-light uppercase tracking-[0.28em] text-ink transition hover:border-ink"
-            >
-              Contacter un conseiller
-            </a>
+                {t('landing.buy')}
+              </a>
+              <a
+                href="#contact"
+                onClick={onClose}
+                className="inline-flex border border-ink/20 px-7 py-3.5 font-sans text-[10px] font-light uppercase tracking-[0.28em] text-ink transition hover:border-ink"
+              >
+                {t('landing.contactAdvisor')}
+              </a>
+            </div>
           </div>
         </div>
+
+        {/* Subtle blur gradient at bottom to indicate scroll continues */}
+        <div className="pointer-events-none fixed inset-x-0 bottom-0 h-16 bg-gradient-to-t from-blanc/80 to-transparent backdrop-blur-[1px]" />
       </div>
     </div>
   );

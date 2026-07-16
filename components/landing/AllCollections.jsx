@@ -1,23 +1,22 @@
 "use client";
 
 import { maisonCollections } from "../../lib/landing-data";
+import { useTranslation } from "../../lib/i18n/context";
 
 export default function AllCollections() {
+  const { t } = useTranslation();
   return (
     <section id="collections" className="px-6 py-24">
       <div className="mx-auto max-w-6xl">
         <div className="mb-14 text-center">
           <p className="font-sans text-[10px] font-light uppercase tracking-[0.42em] text-ink-soft">
-            La maison
+            {t('landing.theHouse')}
           </p>
           <h2 className="mt-4 font-serif text-3xl font-light tracking-[0.06em] text-ink sm:text-4xl">
-            Découvrir toutes les collections
+            {t('landing.allCollectionsTitle')}
           </h2>
           <p className="mx-auto mt-5 max-w-xl font-sans text-[12px] font-light leading-relaxed text-ink-soft">
-            Depuis 1996, Marie Gabison imagine des colliers, boucles
-            d&apos;oreilles et manchettes — quasiment toujours en modèles uniques
-            ou en sur-mesure. Les pièces signatures numérotées restent en
-            quantités confidentielles.
+            {t('landing.allCollectionsDesc')}
           </p>
         </div>
 
@@ -52,8 +51,8 @@ export default function AllCollections() {
                 className="mt-8 inline-flex w-fit items-center gap-2 font-sans text-[10px] font-light uppercase tracking-[0.28em] text-ink transition group-hover:gap-3"
               >
                 {collection.id === "sur-mesure"
-                  ? "Rendez-vous à Paris"
-                  : "Découvrir & acquérir"}
+                  ? t('landing.parisAppointment')
+                  : t('landing.discoverAcquire')}
                 <span aria-hidden>→</span>
               </a>
             </article>

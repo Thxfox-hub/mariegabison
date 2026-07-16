@@ -18,8 +18,8 @@ const SPREADSHEET_ID = '1p3dvpr_wH0iU3pGnjLQXrpjgp_sm3WSaurKoLWBc_Yw';
 const SHEET_NAME = 'Réponses au formulaire 1';
 
 function doGet(e) {
-  // Route vers la mini-app de gestion de stock (HTML + suppression)
-  if (e && e.parameter && e.parameter.app === 'stock') {
+  // Route vers les endpoints du stock app (JSON + page HTML)
+  if (e && e.parameter && (e.parameter.app === 'stock' || e.parameter.action === 'getStock' || e.parameter.action === 'getCollections' || e.parameter.action === 'delete' || e.parameter.action === 'deleteCollection')) {
     return serveStockApp(e);
   }
 
@@ -425,4 +425,13 @@ function isFilled_(x) {
   if (x === null || x === undefined) return false;
   if (typeof x === 'number') return true;
   return String(x).trim() !== '';
+}
+
+// ─── POST: route vers le stock app (addProduct, addCollection, updateCollection) ───
+function doPost(e) {
+  if (e && e.parameter && (e.parameter.app === 'stock' || e.parameter.action === 'addProduct' || e.parameter.action === 'addCollection' || e.parameter.action === 'updateCollection' || e.parameter.action === 'updateProduct')) {
+    return serveStockAppPost(e);
+  }
+  return ContentService.createTextOutput(JSON.stringify({ error: 'POST non supporté' }))
+    .setMimeType(ContentService.MimeType.JSON);
 }

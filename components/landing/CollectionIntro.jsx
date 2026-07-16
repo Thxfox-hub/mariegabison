@@ -1,10 +1,13 @@
 "use client";
 
+import { useTranslation } from "../../lib/i18n/context";
+
 export default function CollectionIntro() {
+  const { t } = useTranslation();
   return (
     <section className="px-6 pb-8 pt-14 text-center animate-fade-up delay-100">
       <p className="font-sans text-[10px] font-light uppercase tracking-[0.48em] text-ink-soft">
-        Nouvelle Collection 2026
+        {t('landing.newCollection')}
       </p>
       <h2 className="mt-5 font-serif text-4xl font-light tracking-[0.08em] text-ink sm:text-5xl md:text-6xl">
         One Day Only

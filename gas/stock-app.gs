@@ -1,63 +1,82 @@
 /**
  * Stock App - Server-side functions
- * Mini app de gestion du stock pour Marie Gabison Paris
+ * Marie Gabison Paris
  *
- * Sert l'HTML avec les données injectées directement (pas de fetch côté client,
- * pas de google.script.run — fonctionne dans Google Sites).
- *
- * Routes:
- *   ?app=stock            → page HTML avec données intégrées
- *   ?app=stock&action=delete&row=N  → supprime puis redirige vers ?app=stock
+ * Endpoints:
+ *   GET  ?app=stock                              → page HTML (legacy)
+ *   GET  ?action=getStock                         → JSON produits
+ *   GET  ?action=delete&row=N                     → supprime ligne N
+ *   GET  ?action=getCollections                   → JSON collections
+ *   GET  ?action=deleteCollection&row=N           → supprime collection
+ *   POST ?action=addProduct                       → ajoute produit (+ images base64)
+ *   POST ?action=addCollection                    → crée collection
+ *   POST ?action=updateCollection                 → modifie collection
  */
 
 // ─── Paramètres ───────────────────────────────────────────────
 var STOCK_SPREADSHEET_ID = '1p3dvpr_wH0iU3pGnjLQXrpjgp_sm3WSaurKoLWBc_Yw';
 var STOCK_SHEET_NAME = 'Réponses au formulaire 1';
+var COLLECTIONS_SHEET_NAME = 'Collections';
+var DRIVE_FOLDER_NAME = 'Marie Gabison Products';
 
-// ─── Sert la page HTML (avec données injectées) ───────────────
+// ═══════════════════════════════════════════════════════════════
+// doGet — routes GET
+// ═══════════════════════════════════════════════════════════════
 function serveStockApp(e) {
-  // Si action=delete, supprimer puis rediriger
-  if (e && e.parameter && e.parameter.action === 'delete' && e.parameter.row) {
-    var rowIndex = parseInt(e.parameter.row, 10);
-    deleteProduct(rowIndex);
-    return HtmlService.createHtmlOutput(
-      '<!DOCTYPE html><html><head>' +
-      '<meta http-equiv="refresh" content="0; url=' + getStockAppUrl_() + '">' +
-      '</head><body>Redirection…</body></html>'
-    )
-    .setTitle('Stock — Marie Gabison Paris')
-    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  var action = e && e.parameter && e.parameter.action;
+
+  // Legacy: page HTML
+  if (!action || action === 'page') {
+    return serveStockPage_(e);
   }
 
-  // Page normale: lire le HTML brut depuis le fichier StockApp,
-  // injecter les données manuellement (remplacement de string),
-  // servir via ContentService (pas d'iframe sandbox, pas de CSP stricte)
-  var htmlTemplate = getRawHtml_('StockApp');
-  var stockData = getStock();
-  var stockDataJson = JSON.stringify(stockData);
-  // Remplacer le scriptlet manuellement
-  var htmlContent = htmlTemplate.replace('<?= stockDataJson ?>', stockDataJson);
-
-  return ContentService.createTextOutput(htmlContent)
-    .setMimeType(ContentService.MimeType.HTML);
-}
-
-// ─── Lit le contenu brut d'un fichier HTML sans wrapper GAS ───
-function getRawHtml_(fileName) {
-  // createHtmlOutputFromFile retourne un HtmlOutput dont getContent()
-  // donne le HTML tel quel (sans l'évaluation des scriptlets)
-  return HtmlService.createHtmlOutputFromFile(fileName).getContent();
-}
-
-// ─── URL de l'app stock (pour redirection après suppression) ──
-function getStockAppUrl_() {
-  var url = ScriptApp.getService().getUrl();
-  // Ajouter ?app=stock si pas déjà présent
-  if (url.indexOf('app=stock') === -1) {
-    url += (url.indexOf('?') === -1 ? '?' : '&') + 'app=stock';
+  if (action === 'getStock') {
+    return jsonOut_(getStock());
   }
-  return url;
+
+  if (action === 'delete' && e.parameter.row) {
+    return jsonOut_(deleteProduct(parseInt(e.parameter.row, 10)));
+  }
+
+  if (action === 'getCollections') {
+    return jsonOut_(getCollections());
+  }
+
+  if (action === 'deleteCollection' && e.parameter.row) {
+    return jsonOut_(deleteCollection(parseInt(e.parameter.row, 10)));
+  }
+
+  return jsonOut_({ error: 'Action GET inconnue: ' + action });
 }
+
+// ═══════════════════════════════════════════════════════════════
+// doPost — routes POST (addProduct, addCollection, updateCollection)
+// ═══════════════════════════════════════════════════════════════
+function serveStockAppPost(e) {
+  var action = e && e.parameter && e.parameter.action;
+
+  if (action === 'addProduct') {
+    return jsonOut_(addProduct(e));
+  }
+
+  if (action === 'addCollection') {
+    return jsonOut_(addCollection(e));
+  }
+
+  if (action === 'updateCollection') {
+    return jsonOut_(updateCollection(e));
+  }
+
+  if (action === 'updateProduct') {
+    return jsonOut_(updateProduct(e));
+  }
+
+  return jsonOut_({ error: 'Action POST inconnue: ' + action });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PRODUITS
+// ═══════════════════════════════════════════════════════════════
 
 // ─── Lit tous les produits ────────────────────────────────────
 function getStock() {
@@ -70,6 +89,7 @@ function getStock() {
 
     var header = values[0];
     var fields = parseHeaderStock_(header);
+    var colIdx = findColumnIndex_(header, 'collection');
 
     var items = [];
     for (var i = 1; i < values.length; i++) {
@@ -83,11 +103,7 @@ function getStock() {
       if (!isFilledStock_(title) && !isFilledStock_(price) && !isFilledStock_(desc)) continue;
 
       var imageUrls = [];
-      try {
-        imageUrls = resolveImages_(rawImages);
-      } catch (e) {
-        imageUrls = [];
-      }
+      try { imageUrls = resolveImages_(rawImages); } catch (e) { imageUrls = []; }
 
       items.push({
         rowIndex: i + 1,
@@ -97,7 +113,8 @@ function getStock() {
         description: String(desc || ''),
         images: imageUrls,
         imageUrl: imageUrls.length ? imageUrls[0] : '',
-        category: normalizeCategoryStock_(type)
+        category: normalizeCategoryStock_(type),
+        collection: colIdx >= 0 ? String(row[colIdx] || '') : ''
       });
     }
 
@@ -107,17 +124,79 @@ function getStock() {
   }
 }
 
+// ─── Ajoute un produit (POST avec images base64) ──────────────
+function addProduct(e) {
+  try {
+    var body = JSON.parse(e.postData.contents);
+    // body: { name, type, price, description, collection, images: [{ name, mimeType, data }] }
+
+    if (!body.name || !body.name.trim()) {
+      return { error: 'Le nom est obligatoire' };
+    }
+    if (!body.images || body.images.length === 0) {
+      return { error: 'Au moins une image est obligatoire' };
+    }
+
+    // 1. Upload images vers Drive
+    var folder = getOrCreateDriveFolder_();
+    var imageUrls = [];
+    for (var i = 0; i < body.images.length; i++) {
+      var img = body.images[i];
+      var bytes = Utilities.base64Decode(img.data);
+      var blob = Utilities.newBlob(bytes, img.mimeType || 'image/jpeg', img.name || ('image_' + i + '.jpg'));
+      var file = folder.createFile(blob);
+      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      imageUrls.push('https://lh3.googleusercontent.com/d/' + file.getId());
+    }
+
+    // 2. Ajouter la ligne au sheet
+    var ss = SpreadsheetApp.openById(STOCK_SPREADSHEET_ID);
+    var sh = ss.getSheetByName(STOCK_SHEET_NAME);
+    if (!sh) return { error: 'Sheet not found' };
+
+    var header = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0];
+    var fields = parseHeaderStock_(header);
+
+    // S'assurer qu'une colonne Collection existe
+    var colIdx = findColumnIndex_(header, 'collection');
+    if (colIdx < 0) {
+      // Ajouter la colonne Collection à la fin
+      var lastCol = sh.getLastColumn();
+      sh.getRange(1, lastCol + 1).setValue('Collection');
+      colIdx = lastCol; // 0-based
+      header.push('Collection');
+    }
+
+    // Construire la ligne
+    var row = new Array(header.length).fill('');
+    if (fields.title !== undefined) row[fields.title] = body.name;
+    if (fields.category !== undefined) row[fields.category] = body.type || '';
+    if (fields.price !== undefined) row[fields.price] = body.price || '';
+    if (fields.description !== undefined) row[fields.description] = body.description || '';
+    if (fields.image !== undefined) row[fields.image] = imageUrls.join(', ');
+    row[colIdx] = body.collection || '';
+
+    // Ajouter un horodateur si la colonne existe
+    var tsIdx = findColumnIndex_(header, 'horodateur');
+    if (tsIdx >= 0) row[tsIdx] = new Date();
+
+    sh.appendRow(row);
+
+    return { success: true, imageUrls: imageUrls, rowIndex: sh.getLastRow() };
+  } catch (err) {
+    return { error: String(err && err.message || err) };
+  }
+}
+
 // ─── Supprime une ligne produit ───────────────────────────────
 function deleteProduct(rowIndex) {
   try {
     var sh = SpreadsheetApp.openById(STOCK_SPREADSHEET_ID).getSheetByName(STOCK_SHEET_NAME);
     if (!sh) return { error: 'Sheet not found' };
-
     var lastRow = sh.getLastRow();
     if (rowIndex < 2 || rowIndex > lastRow) {
       return { error: 'Index de ligne invalide: ' + rowIndex };
     }
-
     sh.deleteRow(rowIndex);
     return { success: true, deletedRow: rowIndex };
   } catch (e) {
@@ -125,7 +204,210 @@ function deleteProduct(rowIndex) {
   }
 }
 
-// ─── Helpers ──────────────────────────────────────────────────
+// ─── Modifie un produit (POST) ────────────────────────────────
+function updateProduct(e) {
+  try {
+    var body = JSON.parse(e.postData.contents);
+    // body: { rowIndex, name?, type?, price?, description?, collection? }
+    if (!body.rowIndex) return { error: 'rowIndex manquant' };
+
+    var sh = SpreadsheetApp.openById(STOCK_SPREADSHEET_ID).getSheetByName(STOCK_SHEET_NAME);
+    if (!sh) return { error: 'Sheet not found' };
+    var lastRow = sh.getLastRow();
+    if (body.rowIndex < 2 || body.rowIndex > lastRow) {
+      return { error: 'Index de ligne invalide' };
+    }
+
+    var header = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0];
+    var fields = parseHeaderStock_(header);
+    var colIdx = findColumnIndex_(header, 'collection');
+
+    var rowIdx = body.rowIndex;
+    var updated = [];
+
+    if (body.name !== undefined && fields.title !== undefined) {
+      sh.getRange(rowIdx, fields.title + 1).setValue(body.name);
+      updated.push('name');
+    }
+    if (body.type !== undefined && fields.category !== undefined) {
+      sh.getRange(rowIdx, fields.category + 1).setValue(body.type);
+      updated.push('type');
+    }
+    if (body.price !== undefined && fields.price !== undefined) {
+      sh.getRange(rowIdx, fields.price + 1).setValue(body.price);
+      updated.push('price');
+    }
+    if (body.description !== undefined && fields.description !== undefined) {
+      sh.getRange(rowIdx, fields.description + 1).setValue(body.description);
+      updated.push('description');
+    }
+    if (body.collection !== undefined && colIdx >= 0) {
+      sh.getRange(rowIdx, colIdx + 1).setValue(body.collection);
+      updated.push('collection');
+    }
+
+    return { success: true, updated: updated };
+  } catch (err) {
+    return { error: String(err && err.message || err) };
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// COLLECTIONS
+// ═══════════════════════════════════════════════════════════════
+
+// ─── Lit toutes les collections ───────────────────────────────
+function getCollections() {
+  try {
+    var ss = SpreadsheetApp.openById(STOCK_SPREADSHEET_ID);
+    var sh = ss.getSheetByName(COLLECTIONS_SHEET_NAME);
+    if (!sh) {
+      // Créer le sheet s'il n'existe pas
+      sh = ss.insertSheet(COLLECTIONS_SHEET_NAME);
+      sh.appendRow(['Nom', 'Description', 'Date création']);
+      return { items: [] };
+    }
+    var values = sh.getDataRange().getValues();
+    if (values.length < 2) return { items: [] };
+
+    var items = [];
+    for (var i = 1; i < values.length; i++) {
+      if (!values[i][0]) continue;
+      items.push({
+        rowIndex: i + 1,
+        name: String(values[i][0]),
+        description: String(values[i][1] || ''),
+        createdAt: values[i][2] ? new Date(values[i][2]).toISOString() : ''
+      });
+    }
+    return { items: items };
+  } catch (e) {
+    return { error: String(e && e.message || e) };
+  }
+}
+
+// ─── Crée une collection ──────────────────────────────────────
+function addCollection(e) {
+  try {
+    var body = JSON.parse(e.postData.contents);
+    if (!body.name || !body.name.trim()) {
+      return { error: 'Le nom de la collection est obligatoire' };
+    }
+
+    var ss = SpreadsheetApp.openById(STOCK_SPREADSHEET_ID);
+    var sh = ss.getSheetByName(COLLECTIONS_SHEET_NAME);
+    if (!sh) {
+      sh = ss.insertSheet(COLLECTIONS_SHEET_NAME);
+      sh.appendRow(['Nom', 'Description', 'Date création']);
+    }
+
+    // Vérifier doublon
+    var existing = sh.getDataRange().getValues();
+    for (var i = 1; i < existing.length; i++) {
+      if (String(existing[i][0]).trim().toLowerCase() === body.name.trim().toLowerCase()) {
+        return { error: 'Cette collection existe déjà' };
+      }
+    }
+
+    sh.appendRow([body.name.trim(), body.description || '', new Date()]);
+    return { success: true, rowIndex: sh.getLastRow() };
+  } catch (err) {
+    return { error: String(err && err.message || err) };
+  }
+}
+
+// ─── Modifie une collection ───────────────────────────────────
+function updateCollection(e) {
+  try {
+    var body = JSON.parse(e.postData.contents);
+    if (!body.rowIndex) return { error: 'rowIndex manquant' };
+
+    var sh = SpreadsheetApp.openById(STOCK_SPREADSHEET_ID).getSheetByName(COLLECTIONS_SHEET_NAME);
+    if (!sh) return { error: 'Sheet Collections not found' };
+
+    var lastRow = sh.getLastRow();
+    if (body.rowIndex < 2 || body.rowIndex > lastRow) {
+      return { error: 'Index invalide' };
+    }
+
+    if (body.name) sh.getRange(body.rowIndex, 1).setValue(body.name.trim());
+    if (body.description !== undefined) sh.getRange(body.rowIndex, 2).setValue(body.description);
+
+    return { success: true };
+  } catch (err) {
+    return { error: String(err && err.message || err) };
+  }
+}
+
+// ─── Supprime une collection ──────────────────────────────────
+function deleteCollection(rowIndex) {
+  try {
+    var sh = SpreadsheetApp.openById(STOCK_SPREADSHEET_ID).getSheetByName(COLLECTIONS_SHEET_NAME);
+    if (!sh) return { error: 'Sheet Collections not found' };
+    var lastRow = sh.getLastRow();
+    if (rowIndex < 2 || rowIndex > lastRow) {
+      return { error: 'Index invalide' };
+    }
+    sh.deleteRow(rowIndex);
+    return { success: true, deletedRow: rowIndex };
+  } catch (e) {
+    return { error: String(e && e.message || e) };
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════════
+
+function jsonOut_(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function serveStockPage_(e) {
+  // Legacy: servir la page HTML (non utilisé par /stock Vercel)
+  if (e && e.parameter && e.parameter.action === 'delete' && e.parameter.row) {
+    deleteProduct(parseInt(e.parameter.row, 10));
+    return HtmlService.createHtmlOutput(
+      '<!DOCTYPE html><html><head>' +
+      '<meta http-equiv="refresh" content="0; url=' + getStockAppUrl_() + '">' +
+      '</head><body>Redirection…</body></html>'
+    ).setTitle('Stock').setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  }
+  var htmlTemplate = HtmlService.createHtmlOutputFromFile('StockApp').getContent();
+  var stockData = getStock();
+  var htmlContent = htmlTemplate.replace('<?= stockDataJson ?>', JSON.stringify(stockData));
+  return ContentService.createTextOutput(htmlContent).setMimeType(ContentService.MimeType.HTML);
+}
+
+function getStockAppUrl_() {
+  var url = ScriptApp.getService().getUrl();
+  if (url.indexOf('app=stock') === -1) {
+    url += (url.indexOf('?') === -1 ? '?' : '&') + 'app=stock';
+  }
+  return url;
+}
+
+function getOrCreateDriveFolder_() {
+  var folders = DriveApp.getFoldersByName(DRIVE_FOLDER_NAME);
+  if (folders.hasNext()) return folders.next();
+  return DriveApp.createFolder(DRIVE_FOLDER_NAME);
+}
+
+function findColumnIndex_(headers, fieldKey) {
+  var MAP = {
+    'collection': ['collection', 'collections']
+  };
+  var synonyms = MAP[fieldKey] || [fieldKey];
+  for (var c = 0; c < headers.length; c++) {
+    var h = String(headers[c] || '').trim().toLowerCase();
+    var hl = stripAccentsStock_(h).replace(/[\s_]+/g, '');
+    for (var s = 0; s < synonyms.length; s++) {
+      if (hl === stripAccentsStock_(synonyms[s]).replace(/[\s_]+/g, '')) return c;
+    }
+  }
+  return -1;
+}
 
 function parseHeaderStock_(headers) {
   var FIELD_MAP = {
@@ -133,7 +415,8 @@ function parseHeaderStock_(headers) {
     'type': 'category', 'category': 'category', 'categorie': 'category',
     'prix': 'price', 'price': 'price',
     'images': 'image', 'image': 'image', 'photo': 'image', 'photos': 'image', 'img': 'image', 'imageurl': 'image',
-    'description': 'description', 'desc': 'description'
+    'description': 'description', 'desc': 'description',
+    'horodateur': 'horodateur', 'timestamp': 'horodateur'
   };
   var fields = {};
   for (var c = 0; c < headers.length; c++) {
@@ -141,9 +424,7 @@ function parseHeaderStock_(headers) {
     if (!h) continue;
     var hl = stripAccentsStock_(h.toLowerCase()).replace(/[\s_]+/g, '');
     var field = FIELD_MAP[hl];
-    if (field && fields[field] === undefined) {
-      fields[field] = c;
-    }
+    if (field && fields[field] === undefined) fields[field] = c;
   }
   return fields;
 }

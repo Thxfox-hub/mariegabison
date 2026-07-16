@@ -1,11 +1,10 @@
 /**
- * API Stock - Produits
+ * API Stock - Collections
  *
- * GET    /api/stock              → liste des produits
- * POST   /api/stock              → ajoute un produit (avec images base64)
- * DELETE /api/stock?row=N        → supprime la ligne N
- *
- * Protégé par Authorization: Bearer <STOCK_ADMIN_TOKEN>
+ * GET    /api/stock/collections          → liste des collections
+ * POST   /api/stock/collections          → crée une collection
+ * DELETE /api/stock/collections?row=N    → supprime la collection N
+ * PATCH  /api/stock/collections          → modifie une collection
  */
 import { timingSafeEqual } from 'crypto';
 
@@ -20,7 +19,6 @@ function checkAuth(req) {
   const auth = req.headers.get('authorization') || '';
   const token = auth.replace(/^Bearer\s+/i, '');
   if (!token) return false;
-  // Timing-safe comparison to prevent timing attacks
   try {
     const a = Buffer.from(token);
     const b = Buffer.from(ADMIN_TOKEN);
@@ -38,13 +36,13 @@ function json(data, status = 200) {
   });
 }
 
-// GET: liste des produits
+// GET: liste des collections
 export async function GET(req) {
   if (!checkAuth(req)) return json({ error: 'Non autorisé' }, 401);
   if (!GAS_URL) return json({ error: 'GAS_URL non configuré' }, 500);
 
   try {
-    const url = GAS_URL + (GAS_URL.includes('?') ? '&' : '?') + 'action=getStock';
+    const url = GAS_URL + (GAS_URL.includes('?') ? '&' : '?') + 'action=getCollections';
     const res = await fetch(url, { cache: 'no-store' });
     const data = await res.json();
     if (data.error) return json({ error: data.error }, 502);
@@ -54,26 +52,18 @@ export async function GET(req) {
   }
 }
 
-// POST: ajoute un produit (avec images base64)
+// POST: crée une collection
 export async function POST(req) {
   if (!checkAuth(req)) return json({ error: 'Non autorisé' }, 401);
   if (!GAS_URL) return json({ error: 'GAS_URL non configuré' }, 500);
 
   try {
     const body = await req.json();
-    // body: { name, type, price, description, collection, images: [{ name, mimeType, data }] }
-
     if (!body.name?.trim()) return json({ error: 'Le nom est obligatoire' }, 400);
-    if (!body.images?.length) return json({ error: 'Au moins une image est obligatoire' }, 400);
-    // Limit to 5 images, 10MB each
-    if (body.images.length > 5) return json({ error: 'Maximum 5 images' }, 400);
-    for (const img of body.images) {
-      if (img.data && Buffer.byteLength(img.data, 'base64') > 10 * 1024 * 1024) {
-        return json({ error: 'Image trop volumineuse (10 MB max)' }, 400);
-      }
-    }
+    // Limit name length
+    if (body.name.length > 100) return json({ error: 'Nom trop long (100 max)' }, 400);
 
-    const url = GAS_URL + (GAS_URL.includes('?') ? '&' : '?') + 'action=addProduct';
+    const url = GAS_URL + (GAS_URL.includes('?') ? '&' : '?') + 'action=addCollection';
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -81,35 +71,13 @@ export async function POST(req) {
     });
     const data = await res.json();
     if (data.error) return json({ error: data.error }, 400);
-    return json({ success: true, imageUrls: data.imageUrls, rowIndex: data.rowIndex });
+    return json({ success: true, rowIndex: data.rowIndex });
   } catch (e) {
     return json({ error: String(e?.message || e) }, 500);
   }
 }
 
-// DELETE: supprime une ligne
-export async function DELETE(req) {
-  if (!checkAuth(req)) return json({ error: 'Non autorisé' }, 401);
-  if (!GAS_URL) return json({ error: 'GAS_URL non configuré' }, 500);
-
-  const row = req.nextUrl.searchParams.get('row');
-  if (!row) return json({ error: 'Paramètre row manquant' }, 400);
-  // Validate row is a positive integer
-  const rowNum = parseInt(row, 10);
-  if (!Number.isFinite(rowNum) || rowNum < 2) return json({ error: 'Row invalide' }, 400);
-
-  try {
-    const url = GAS_URL + (GAS_URL.includes('?') ? '&' : '?') + 'action=delete&row=' + encodeURIComponent(row);
-    const res = await fetch(url, { cache: 'no-store' });
-    const data = await res.json();
-    if (data.error) return json({ error: data.error }, 400);
-    return json({ success: true, deletedRow: rowNum });
-  } catch (e) {
-    return json({ error: String(e?.message || e) }, 502);
-  }
-}
-
-// PATCH: modifie un produit
+// PATCH: modifie une collection
 export async function PATCH(req) {
   if (!checkAuth(req)) return json({ error: 'Non autorisé' }, 401);
   if (!GAS_URL) return json({ error: 'GAS_URL non configuré' }, 500);
@@ -120,7 +88,7 @@ export async function PATCH(req) {
     const rowNum = parseInt(body.rowIndex, 10);
     if (!Number.isFinite(rowNum) || rowNum < 2) return json({ error: 'rowIndex invalide' }, 400);
 
-    const url = GAS_URL + (GAS_URL.includes('?') ? '&' : '?') + 'action=updateProduct';
+    const url = GAS_URL + (GAS_URL.includes('?') ? '&' : '?') + 'action=updateCollection';
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -128,8 +96,29 @@ export async function PATCH(req) {
     });
     const data = await res.json();
     if (data.error) return json({ error: data.error }, 400);
-    return json({ success: true, updated: data.updated || [] });
+    return json({ success: true });
   } catch (e) {
     return json({ error: String(e?.message || e) }, 500);
+  }
+}
+
+// DELETE: supprime une collection
+export async function DELETE(req) {
+  if (!checkAuth(req)) return json({ error: 'Non autorisé' }, 401);
+  if (!GAS_URL) return json({ error: 'GAS_URL non configuré' }, 500);
+
+  const row = req.nextUrl.searchParams.get('row');
+  if (!row) return json({ error: 'Paramètre row manquant' }, 400);
+  const rowNum = parseInt(row, 10);
+  if (!Number.isFinite(rowNum) || rowNum < 2) return json({ error: 'Row invalide' }, 400);
+
+  try {
+    const url = GAS_URL + (GAS_URL.includes('?') ? '&' : '?') + 'action=deleteCollection&row=' + encodeURIComponent(row);
+    const res = await fetch(url, { cache: 'no-store' });
+    const data = await res.json();
+    if (data.error) return json({ error: data.error }, 400);
+    return json({ success: true, deletedRow: rowNum });
+  } catch (e) {
+    return json({ error: String(e?.message || e) }, 502);
   }
 }

@@ -4,6 +4,8 @@
  */
 "use client";
 
+import { useTranslation } from "../lib/i18n/context";
+
 const InstagramIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
     <rect x="2" y="2" width="20" height="20" rx="5" />
@@ -27,6 +29,7 @@ const WhatsAppIcon = () => (
 );
 
 export default function Footer() {
+  const { t } = useTranslation();
   const whatsappUrl = "https://wa.me/33783882052";
   const email = "contact@mariegabison.fr";
 
@@ -43,10 +46,10 @@ export default function Footer() {
           One Day Only
         </a>
         <a href="/#collections" className="transition hover:text-ink">
-          Collections
+          {t('landing.collections')}
         </a>
         <a href="/#contact" className="transition hover:text-ink">
-          Contact
+          {t('footer.contact')}
         </a>
       </div>
       {/* Social icons */}
@@ -78,7 +81,7 @@ export default function Footer() {
         </a>
       </div>
       <p className="mt-8 font-sans text-[10px] font-light tracking-wide text-ink-soft/60">
-        © {new Date().getFullYear()} Marie Gabison Paris — Tous droits réservés
+        {t('landing.footerRights', { year: new Date().getFullYear() })}
       </p>
     </footer>
   );

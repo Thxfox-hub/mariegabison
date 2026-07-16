@@ -72,7 +72,24 @@ export default function CartPage() {
           city: v?.city || "",
           street: v?.street || "",
         });
-        setAddrQuery([v?.street, v?.postal_code, v?.city].filter(Boolean).join(", "))
+        // Restore full address query or build from parts
+        const savedQuery = localStorage.getItem("mariegabison_checkout_addr_query");
+        if (savedQuery) {
+          setAddrQuery(savedQuery);
+        } else {
+          setAddrQuery([v?.street, v?.postal_code, v?.city, v?.country].filter(Boolean).join(", "));
+        }
+        // Restore selectedAddress object
+        if (v?.street && v?.city) {
+          setSelectedAddress({
+            formatted: savedQuery || [v?.street, v?.postal_code, v?.city].filter(Boolean).join(", "),
+            city: v?.city,
+            state: '',
+            country: v?.country,
+            postcode: v?.postal_code,
+            street: v?.street,
+          });
+        }
       }
     } catch {}
   }, []);
@@ -84,6 +101,10 @@ export default function CartPage() {
   useEffect(() => {
     try { localStorage.setItem("mariegabison_checkout_contact", JSON.stringify({ name, email, phone: fullPhone })); } catch {}
   }, [name, email, phoneNational, phoneCountry, fullPhone]);
+  // Persist addrQuery (the full text shown in the address input)
+  useEffect(() => {
+    try { localStorage.setItem("mariegabison_checkout_addr_query", addrQuery); } catch {}
+  }, [addrQuery]);
 
   const fmt = useMemo(() => new Intl.NumberFormat(lang === 'en' ? 'en-US' : lang === 'ru' ? 'ru-RU' : lang === 'it' ? 'it-IT' : 'fr-FR', { style: 'currency', currency: 'EUR' }), [lang]);
   const estimatedTotal = useMemo(() => total + (selectedShip?.price || 0), [total, selectedShip]);
@@ -275,7 +296,7 @@ export default function CartPage() {
   return (
     <>
       {/* Header is provided by AppShell */}
-      <main className="container cart-page" style={{ paddingTop: 16, paddingLeft: 24, paddingRight: 24 }}>
+      <main className="container cart-page" style={{ paddingTop: 16, paddingLeft: 24, paddingRight: 24, maxWidth: 920, margin: '0 auto' }}>
         <div className="grid" style={{ gridTemplateColumns: '1fr', gap: 24 }}>
           {/* Content layout */}
           <div className="grid" style={{ gridTemplateColumns: '1fr', gap: 24 }}>
@@ -341,12 +362,12 @@ export default function CartPage() {
                       <option value="GB">🇬🇧 +44</option>
                       <option value="US">🇺🇸 +1</option>
                     </select>
-                    <input className="input" placeholder={t('checkout.phone')} value={phoneNational} onChange={(e) => setPhoneNational(e.target.value)} style={{ width: 220 }} />
+                    <input className="input" placeholder={t('checkout.phone')} value={phoneNational} onChange={(e) => setPhoneNational(e.target.value)} style={{ width: '100%' }} />
                   </div>
                 </div>
                 <h3 className="title" style={{ fontSize: '1.1rem', margin: '16px 0 8px' }}>{t('checkout.address')}</h3>
-                <div style={{ position: 'relative' }}>
-                  <input className="input address" placeholder={t('checkout.addressPlaceholder')} value={addrQuery} onChange={(e) => setAddrQuery(e.target.value)} />
+                <div style={{ position: 'relative', width: '100%' }}>
+                  <input className="input address" placeholder={t('checkout.addressPlaceholder')} value={addrQuery} onChange={(e) => setAddrQuery(e.target.value)} style={{ width: '100%', boxSizing: 'border-box' }} />
                   {suggesting && (
                     <div className="status" style={{ position: 'absolute', zIndex: 10, width: '100%' }}>{t('checkout.searching')}</div>
                   )}
