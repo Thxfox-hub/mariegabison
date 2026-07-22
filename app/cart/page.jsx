@@ -31,6 +31,20 @@ export default function CartPage() {
   const dialMap = { FR: '33', BE: '32', DE: '49', ES: '34', IT: '39', NL: '31', GB: '44', US: '1' };
   const fullPhone = useMemo(() => `+${dialMap[phoneCountry] || '33'} ${phoneNational.trim()}`.trim(), [phoneCountry, phoneNational]);
 
+  // Normalize country to ISO-2 (handles Geoapify country names stored in old localStorage)
+  const normalizeCountry = (c) => {
+    if (!c) return 'FR';
+    const s = String(c).trim().toUpperCase();
+    if (s.length === 2) return s;
+    const map = {
+      FRANCE: 'FR', BELGIQUE: 'BE', SUISSE: 'CH', ALLEMAGNE: 'DE', ESPAGNE: 'ES',
+      ITALIE: 'IT', 'GRANDE-BRETAGNE': 'GB', 'ROYAUME-UNI': 'GB', 'ÉTATS-UNIS': 'US',
+      ETATS_UNIS: 'US', CANADA: 'CA', PAYS_BAS: 'NL', LUXEMBOURG: 'LU', AUTRICHE: 'AT',
+      PORTUGAL: 'PT', IRlandE: 'IE', SUÈDE: 'SE', Suede: 'SE', DANEMARK: 'DK',
+    };
+    return map[s] || s.slice(0, 2) || 'FR';
+  };
+
   // Shipping rates
   const [estimating, setEstimating] = useState(false);
   const [shipOptions, setShipOptions] = useState([]);
@@ -41,6 +55,17 @@ export default function CartPage() {
   // Payment
   const [paying, setPaying] = useState(false);
   const [payError, setPayError] = useState(null);
+
+  // Shipping estimate toggle (persisted; default off so the merchant can enable it when needed)
+  const SHIPPING_ENABLED_KEY = "mariegabison_shipping_enabled_v2";
+  const [shippingEnabled, setShippingEnabled] = useState(() => {
+    try {
+      const saved = localStorage.getItem(SHIPPING_ENABLED_KEY);
+      return saved === null ? false : saved === "true";
+    } catch {
+      return false;
+    }
+  });
 
   // Load stored contact/address
   useEffect(() => {
@@ -66,8 +91,9 @@ export default function CartPage() {
       const a = localStorage.getItem("mariegabison_checkout_address");
       if (a) {
         const v = JSON.parse(a);
+        const country = normalizeCountry(v?.country);
         setAddr({
-          country: v?.country || "FR",
+          country,
           postal_code: v?.postal_code || "",
           city: v?.city || "",
           street: v?.street || "",
@@ -77,7 +103,7 @@ export default function CartPage() {
         if (savedQuery) {
           setAddrQuery(savedQuery);
         } else {
-          setAddrQuery([v?.street, v?.postal_code, v?.city, v?.country].filter(Boolean).join(", "));
+          setAddrQuery([v?.street, v?.postal_code, v?.city, country].filter(Boolean).join(", "));
         }
         // Restore selectedAddress object
         if (v?.street && v?.city) {
@@ -85,7 +111,7 @@ export default function CartPage() {
             formatted: savedQuery || [v?.street, v?.postal_code, v?.city].filter(Boolean).join(", "),
             city: v?.city,
             state: '',
-            country: v?.country,
+            country,
             postcode: v?.postal_code,
             street: v?.street,
           });
@@ -98,6 +124,16 @@ export default function CartPage() {
   useEffect(() => {
     try { localStorage.setItem("mariegabison_checkout_address", JSON.stringify(addr)); } catch {}
   }, [addr]);
+
+  // Persist shipping estimate toggle and clear options when disabled
+  useEffect(() => {
+    try { localStorage.setItem(SHIPPING_ENABLED_KEY, String(shippingEnabled)); } catch {}
+    if (!shippingEnabled) {
+      setShipOptions([]);
+      setSelectedShipId(null);
+      setShipError(null);
+    }
+  }, [shippingEnabled]);
   useEffect(() => {
     try { localStorage.setItem("mariegabison_checkout_contact", JSON.stringify({ name, email, phone: fullPhone })); } catch {}
   }, [name, email, phoneNational, phoneCountry, fullPhone]);
@@ -157,7 +193,7 @@ export default function CartPage() {
             if (Array.isArray(list) && list[0]) {
               const s = list[0];
               setAddr({
-                country: s.country || 'FR',
+                country: normalizeCountry(s.country_code || s.country),
                 postal_code: s.postal_code || '',
                 city: s.city || '',
                 street: s.street || s.label || '',
@@ -187,16 +223,20 @@ export default function CartPage() {
       if (list[0]) setSelectedShipId(list[0].id);
     } catch (e) {
       console.error("[Rates] Error:", e);
-      setShipError(e?.message || String(e));
+      const errMsg = e && typeof e === 'object'
+        ? (e.message ? String(e.message) : (e.error ? String(e.error) : JSON.stringify(e)))
+        : String(e);
+      setShipError(errMsg || 'Erreur de livraison');
     } finally {
       console.log("[Rates] fetchRates done. estimating=false");
       setEstimating(false);
     }
   };
 
-  // Auto fetch shipping when address is filled
+  // Auto fetch shipping when address is filled (only if enabled)
   useEffect(() => {
     if (!mounted) return;
+    if (!shippingEnabled) return;
     if (!items.length) return;
     if (!addr.country) return;
     const qlen = addrQuery.trim().length;
@@ -206,7 +246,7 @@ export default function CartPage() {
     console.log("[Rates] Auto-trigger fetchRates. byPostal=", canByPostal, "byQuery=", canByQuery, "addr=", addr, "addrQuery=", addrQuery);
     const t = setTimeout(() => { fetchRates(); }, 3000); // 3s wait after address
     return () => clearTimeout(t);
-  }, [mounted, items.length, addr.country, addr.postal_code, addr.city, addr.street, addrQuery]);
+  }, [mounted, shippingEnabled, items.length, addr.country, addr.postal_code, addr.city, addr.street, addrQuery]);
 
   // Address autocomplete with Geoapify API (like enhancedlook)
   useEffect(() => {
@@ -225,7 +265,8 @@ export default function CartPage() {
             formatted: feature.properties.formatted,
             city: feature.properties.city,
             state: feature.properties.state,
-            country: feature.properties.country,
+            country: feature.properties.country_code || feature.properties.country,
+            country_name: feature.properties.country,
             postcode: feature.properties.postcode,
             street: feature.properties.street,
           }));
@@ -243,14 +284,15 @@ export default function CartPage() {
   }, [addrQuery]);
 
   const applySuggestion = (s) => {
+    const countryCode = normalizeCountry(s.country_code || s.country || addr.country);
     setAddr({
-      country: s.country || addr.country || 'FR',
+      country: countryCode,
       postal_code: s.postcode || '',
       city: s.city || '',
       street: s.street || s.formatted || '',
     });
     setAddrQuery(s.formatted || [s.street, s.postcode, s.city].filter(Boolean).join(', '));
-    setSelectedAddress(s);
+    setSelectedAddress({ ...s, country: countryCode, country_name: s.country_name || s.country });
     setSuggestions([]);
   };
 
@@ -393,15 +435,17 @@ export default function CartPage() {
                   </div>
                 )}
 
-                <h3 className="title" style={{ fontSize: '1.1rem', margin: '16px 0 8px' }}>{t('checkout.delivery')} {estimating && <span style={{ color: '#666', fontWeight: 400 }}>{t('checkout.calculating')}</span>}</h3>
-                {selectedShip && (
+                {shippingEnabled && (
+                  <>
+                    <h3 className="title" style={{ fontSize: '1.1rem', margin: '16px 0 8px' }}>{t('checkout.delivery')} {estimating && <span style={{ color: '#666', fontWeight: 400 }}>{t('checkout.calculating')}</span>}</h3>
+                    {selectedShip && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                     <span>{t('checkout.estimatedTotal')}:</span>
                     <span className="price">{fmt.format(estimatedTotal)}</span>
                   </div>
                 )}
-                {shipError && <div className="status error" style={{ marginTop: 8 }}>{shipError}</div>}
-                {shipOptions.length > 0 && (
+                {shippingEnabled && shipError && <div className="status error" style={{ marginTop: 8 }}>{shipError}</div>}
+                {shippingEnabled && shipOptions.length > 0 && (
                   <div style={{ marginTop: 12, display: 'grid', gap: 8 }}>
                     {shipOptions.map(opt => (
                       <label key={opt.id} className="cart-item" style={{ display: 'grid', gap: 6, cursor: 'pointer', borderRadius: 8 }}>
@@ -417,6 +461,8 @@ export default function CartPage() {
                     ))}
                   </div>
                 )}
+              </>
+            )}
 
                 <h3 className="title" style={{ fontSize: '1.1rem', margin: '16px 0 8px' }}>{t('checkout.summary')}</h3>
                 <div className="cart-total">

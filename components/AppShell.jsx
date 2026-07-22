@@ -26,6 +26,13 @@ export default function AppShell({ children }) {
     }
   }, []);
 
+  // Open cart drawer when a product is added from elsewhere (e.g. JewelryGrid)
+  useEffect(() => {
+    const onOpenCart = () => setDrawerOpen(true);
+    window.addEventListener('cart:open', onOpenCart);
+    return () => window.removeEventListener('cart:open', onOpenCart);
+  }, []);
+
   return (
     <>
       <Header

@@ -208,7 +208,7 @@ function deleteProduct(rowIndex) {
 function updateProduct(e) {
   try {
     var body = JSON.parse(e.postData.contents);
-    // body: { rowIndex, name?, type?, price?, description?, collection? }
+    // body: { rowIndex, name?, type?, price?, description?, collection?, images: [{ url } | { name, mimeType, data }] }
     if (!body.rowIndex) return { error: 'rowIndex manquant' };
 
     var sh = SpreadsheetApp.openById(STOCK_SPREADSHEET_ID).getSheetByName(STOCK_SHEET_NAME);
@@ -244,6 +244,26 @@ function updateProduct(e) {
     if (body.collection !== undefined && colIdx >= 0) {
       sh.getRange(rowIdx, colIdx + 1).setValue(body.collection);
       updated.push('collection');
+    }
+
+    if (body.images !== undefined && fields.image !== undefined) {
+      if (body.images.length > 5) return { error: 'Maximum 5 images' };
+      var folder = getOrCreateDriveFolder_();
+      var imageUrls = [];
+      for (var i = 0; i < body.images.length; i++) {
+        var img = body.images[i];
+        if (img.url) {
+          imageUrls.push(img.url);
+        } else if (img.data) {
+          var bytes = Utilities.base64Decode(img.data);
+          var blob = Utilities.newBlob(bytes, img.mimeType || 'image/jpeg', img.name || ('image_' + i + '.jpg'));
+          var file = folder.createFile(blob);
+          file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+          imageUrls.push('https://lh3.googleusercontent.com/d/' + file.getId());
+        }
+      }
+      sh.getRange(rowIdx, fields.image + 1).setValue(imageUrls.join(', '));
+      updated.push('images');
     }
 
     return { success: true, updated: updated };

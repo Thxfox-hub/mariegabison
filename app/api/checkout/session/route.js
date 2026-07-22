@@ -35,10 +35,13 @@ export async function POST(req) {
     const unit = Math.round(Number(it.price) * 100);
     const qty = Number(it.quantity) || 1;
     if (!Number.isFinite(unit) || unit <= 0 || !Number.isFinite(qty) || qty <= 0) continue;
+    const imageUrl = it.imageUrl || it.image || '';
+    const productData = { name };
+    if (imageUrl) productData.images = [imageUrl];
     line_items.push({
       price_data: {
         currency,
-        product_data: { name },
+        product_data: productData,
         unit_amount: unit,
       },
       quantity: qty,

@@ -26,7 +26,8 @@ function CompletionInner() {
       // Fallback to client secret flow if provided
       if (clientSecret && window?.Stripe) {
         try {
-          const stripe = window.Stripe?.(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? "");
+          const publishableKey = process.env.STRIPE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "";
+          const stripe = window.Stripe?.(publishableKey);
           if (!stripe) throw new Error('Stripe unavailable');
           const { paymentIntent } = await stripe.retrievePaymentIntent(clientSecret);
           switch (paymentIntent?.status) {

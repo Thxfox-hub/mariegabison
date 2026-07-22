@@ -9,8 +9,7 @@ import JewelryModal from "./JewelryModal";
  * Carousel.jsx - Marie Gabison Paris
  * Editorial carousel with touch/swipe support and auto-rotation pause.
  */
-const PAUSE_DURATION = 8000; // pause after user interaction (ms)
-const AUTO_INTERVAL = 5500;  // auto-rotation interval (ms)
+const AUTO_INTERVAL = 5500; // auto-rotation interval (ms)
 
 export default function Carousel() {
   const { t } = useTranslation();
@@ -20,30 +19,24 @@ export default function Carousel() {
   const [isDragging, setIsDragging] = useState(false);
   const pieces = carouselPieces;
 
-  const pauseUntilRef = useRef(0);
   const touchStartXRef = useRef(null);
   const touchStartYRef = useRef(null);
   const isSwipingRef = useRef(false);
+  const isDraggingRef = useRef(false);
 
-  // ─── Auto-rotation (pauses after user interaction) ───
+  // ─── Auto-rotation (resets its timer after each slide change or manual interaction) ───
   useEffect(() => {
     if (pieces.length <= 1) return;
     const timer = window.setInterval(() => {
-      if (Date.now() < pauseUntilRef.current) return; // still paused
+      if (isDraggingRef.current) return; // don't auto-advance while the user is dragging
       setActive((prev) => (prev + 1) % pieces.length);
     }, AUTO_INTERVAL);
     return () => window.clearInterval(timer);
-  }, [pieces.length]);
-
-  // ─── Pause auto-rotation for PAUSE_DURATION ───
-  const pauseAuto = useCallback(() => {
-    pauseUntilRef.current = Date.now() + PAUSE_DURATION;
-  }, []);
+  }, [active, pieces.length]);
 
   const goTo = useCallback((index) => {
     setActive((index + pieces.length) % pieces.length);
-    pauseAuto();
-  }, [pieces.length, pauseAuto]);
+  }, [pieces.length]);
 
   // ─── Touch handlers for swipe ───
   const onTouchStart = (e) => {
@@ -51,6 +44,7 @@ export default function Carousel() {
     touchStartXRef.current = e.touches[0].clientX;
     touchStartYRef.current = e.touches[0].clientY;
     isSwipingRef.current = false;
+    isDraggingRef.current = true;
     setIsDragging(true);
   };
 
@@ -63,7 +57,6 @@ export default function Carousel() {
     if (!isSwipingRef.current) {
       if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) {
         isSwipingRef.current = true;
-        pauseAuto();
       } else if (Math.abs(dy) > 10) {
         // Vertical scroll — don't hijack
         touchStartXRef.current = null;
@@ -98,8 +91,8 @@ export default function Carousel() {
     touchStartYRef.current = null;
     isSwipingRef.current = false;
     setDragOffset(0);
+    isDraggingRef.current = false;
     setIsDragging(false);
-    pauseAuto();
   };
 
   // ─── Compute transform with drag offset ───

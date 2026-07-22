@@ -34,16 +34,6 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="fr" suppressHydrationWarning className={`${cormorant.variable} ${jost.variable}`}>
-      <head>
-        {/* Unregister any stale service workers from previous sessions */}
-        <script dangerouslySetInnerHTML={{ __html: `
-          if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations()
-              .then(function(regs) { regs.forEach(function(r) { r.unregister(); }); })
-              .catch(function() {});
-          }
-        `}} />
-      </head>
       <body>
         <I18nProvider>
           <UserProvider>

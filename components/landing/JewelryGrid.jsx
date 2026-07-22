@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useCart } from "../../components/CartProvider";
 import { useTranslation } from "../../lib/i18n/context";
 
 /**
@@ -12,7 +13,13 @@ import { useTranslation } from "../../lib/i18n/context";
  */
 export default function JewelryGrid({ items = [], title }) {
   const { t, lang } = useTranslation();
+  const { addItem } = useCart();
   const resolvedTitle = title ?? t('landing.discoverCollection');
+
+  const handleBuy = (piece) => {
+    addItem(piece);
+    window.dispatchEvent(new CustomEvent('cart:open'));
+  };
 
   const formatPrice = (p) => {
     const n = Number(p);
@@ -57,12 +64,13 @@ export default function JewelryGrid({ items = [], title }) {
                   >
                     {t('landing.seeMore')}
                   </Link>
-                  <a
-                    href="#contact"
+                  <button
+                    type="button"
+                    onClick={() => handleBuy(piece)}
                     className="w-full border border-blanc/40 bg-ink/90 px-4 py-3 text-center font-sans text-[10px] font-light uppercase tracking-[0.28em] text-blanc backdrop-blur-sm transition hover:bg-ink"
                   >
                     {t('landing.buy')}
-                  </a>
+                  </button>
                 </div>
 
                 {piece.category && (
@@ -89,12 +97,13 @@ export default function JewelryGrid({ items = [], title }) {
                   >
                     {t('landing.seeMore')}
                   </Link>
-                  <a
-                    href="#contact"
+                  <button
+                    type="button"
+                    onClick={() => handleBuy(piece)}
                     className="font-sans text-[10px] font-light uppercase tracking-[0.24em] text-ink underline decoration-ink/25 underline-offset-6 transition hover:decoration-ink"
                   >
                     {t('landing.buy')}
-                  </a>
+                  </button>
                 </div>
               </div>
             </article>

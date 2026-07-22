@@ -38,6 +38,8 @@ export default function StockPage() {
   const [savingEdit, setSavingEdit] = useState(false);
   const [editError, setEditError] = useState('');
   const [detailImageIdx, setDetailImageIdx] = useState(0);
+  const [editImages, setEditImages] = useState([]);
+  const editFileInputRef = useRef(null);
 
   // Collection modal
   const [showCollectionModal, setShowCollectionModal] = useState(false);
@@ -178,6 +180,7 @@ export default function StockPage() {
     setEditMode(false);
     setEditError('');
     setDetailImageIdx(0);
+    setEditImages(product.images || (product.imageUrl ? [product.imageUrl] : []));
     setEditForm({
       name: product.title || '',
       type: product.type || product.category || '',
@@ -193,6 +196,7 @@ export default function StockPage() {
     setEditError('');
     setSavingEdit(true);
     try {
+      const images = editImages.map(img => typeof img === 'string' ? { url: img } : { name: img.name, mimeType: img.mimeType, data: img.data });
       const res = await fetch('/api/stock', {
         method: 'PATCH',
         headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
@@ -203,6 +207,7 @@ export default function StockPage() {
           price: editForm.price,
           description: editForm.description,
           collection: editForm.collection,
+          images,
         }),
       });
       const data = await res.json();
@@ -218,16 +223,14 @@ export default function StockPage() {
   };
 
   // ─── Image handling ───
-  const handleImageSelect = (e) => {
-    const files = Array.from(e.target.files);
-    if (!files.length) return;
-    const remaining = 5 - addImages.length;
+  const readImageFiles = (files, current, set) => {
+    const remaining = 5 - current.length;
     const toAdd = files.slice(0, remaining);
     toAdd.forEach(file => {
       const reader = new FileReader();
       reader.onload = (ev) => {
         const base64 = ev.target.result.split(',')[1];
-        setAddImages(prev => [...prev, {
+        set(prev => [...prev, {
           name: file.name,
           mimeType: file.type,
           data: base64,
@@ -238,8 +241,24 @@ export default function StockPage() {
     });
   };
 
+  const handleImageSelect = (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+    readImageFiles(files, addImages, setAddImages);
+  };
+
   const removeImage = (idx) => {
     setAddImages(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleEditImageSelect = (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+    readImageFiles(files, editImages, setEditImages);
+  };
+
+  const removeEditImage = (idx) => {
+    setEditImages(prev => prev.filter((_, i) => i !== idx));
   };
 
   // ─── Add product ───
@@ -778,6 +797,25 @@ export default function StockPage() {
                   <textarea value={editForm.description}
                     onChange={e => setEditForm({ ...editForm, description: e.target.value })}
                     style={{ ...inputStyle, minHeight: 70, resize: 'vertical' }} />
+                </div>
+                <div style={fieldGroup}>
+                  <label style={labelStyle}>Images (max 5)</label>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
+                    {editImages.map((img, i) => {
+                      const src = typeof img === 'string' ? img : img.preview;
+                      return (
+                        <div key={i} style={{ position: 'relative', width: 80, height: 80 }}>
+                          <img src={src} alt="" style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, border: '1px solid #e5e0d8' }} />
+                          <button type="button" onClick={() => removeEditImage(i)} style={{ position: 'absolute', top: -6, right: -6, width: 22, height: 22, borderRadius: '50%', background: '#b33a3a', color: '#fff', border: 'none', cursor: 'pointer', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
+                        </div>
+                      );
+                    })}
+                    {editImages.length < 5 && (
+                      <button type="button" onClick={() => editFileInputRef.current?.click()} style={uploadBtn}>+</button>
+                    )}
+                  </div>
+                  <input ref={editFileInputRef} type="file" accept="image/*" multiple onChange={handleEditImageSelect} style={{ display: 'none' }} />
+                  <p style={{ fontSize: 11, color: '#8a8278' }}>{editImages.length} image(s)</p>
                 </div>
                 {editError && <p style={{ color: '#b33a3a', fontSize: 13, marginBottom: 12 }}>{editError}</p>}
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>

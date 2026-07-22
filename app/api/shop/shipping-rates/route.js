@@ -9,6 +9,8 @@ const SC_KEY = process.env.SENDCLOUD_PUBLIC_KEY;
 const SC_SECRET = process.env.SENDCLOUD_SECRET_KEY;
 const FROM_COUNTRY = process.env.SENDCLOUD_FROM_COUNTRY;
 const FROM_POSTAL_CODE = process.env.SENDCLOUD_FROM_POSTAL_CODE;
+const FROM_CITY = process.env.SENDCLOUD_FROM_CITY;
+const FROM_STREET = process.env.SENDCLOUD_FROM_STREET;
 
 function b64(s) {
   if (typeof Buffer !== 'undefined') return Buffer.from(s).toString('base64');
@@ -30,6 +32,23 @@ function jsonOK(data) {
 }
 function jsonErr(status, data) {
   return new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json', ...corsHeaders() } });
+}
+
+// Normalize Sendcloud error payloads (object or string) into a readable message
+function extractError(err, fallback = 'Erreur Sendcloud') {
+  if (typeof err === 'string' && err.trim()) return err;
+  if (err && typeof err === 'object') {
+    if (err.message && typeof err.message === 'string') return err.message;
+    if (err.error) {
+      if (typeof err.error === 'string') return err.error;
+      if (err.error && typeof err.error === 'object') {
+        if (err.error.message && typeof err.error.message === 'string') return err.error.message;
+        if (err.error.status && err.error.message) return `${err.error.status}: ${err.error.message}`;
+      }
+    }
+    try { return JSON.stringify(err); } catch {}
+  }
+  return fallback;
 }
 
 function makeCacheKey(address, parcels) {
@@ -60,7 +79,7 @@ async function sendcloud(path, init = {}) {
     let json = null;
     try { json = text ? JSON.parse(text) : null; } catch {}
     if (!res.ok) {
-      throw new Error(json?.error || json?.message || text || `Sendcloud error ${res.status}`);
+      throw new Error(extractError(json, text || `Sendcloud error ${res.status}`));
     }
     return json;
   } finally {
@@ -85,7 +104,7 @@ async function sendcloudPublic(path, init = {}) {
     let json = null;
     try { json = text ? JSON.parse(text) : null; } catch {}
     if (!res.ok) {
-      throw new Error(json?.error || json?.message || text || `Sendcloud public error ${res.status}`);
+      throw new Error(extractError(json, text || `Sendcloud public error ${res.status}`));
     }
     return json;
   } finally {
@@ -147,6 +166,8 @@ export async function POST(req) {
         const body = {
           from_country: String(FROM_COUNTRY).toUpperCase(),
           from_postal_code: String(FROM_POSTAL_CODE),
+          from_city: FROM_CITY || undefined,
+          from_street: FROM_STREET || undefined,
           to_country: toCountry,
           to_postal_code: toPostal,
           weight: Math.round(totalWeightG), // grams per Sendcloud shipping-prices
@@ -181,10 +202,18 @@ export async function POST(req) {
     // 2) Filter methods by destination and weight bounds if present
     const weightKg = totalWeightG / 1000; // Sendcloud fields are often in kg
     console.log(`[RatesAPI] fallback pricing via shipping_methods to ${toCountry}/${toPostal} weightKg=${weightKg}`);
+
+    const countryMatches = (c, target) => {
+      if (!c) return false;
+      const iso = String(c?.iso_2 || '').toUpperCase();
+      const name = String(c?.name || '').toUpperCase();
+      return iso === target || (target.length > 2 && name === target);
+    };
+
     const filtered = list.filter((m) => {
       // Country restriction
       const countries = Array.isArray(m?.countries) ? m.countries : [];
-      const countryOK = countries.length ? countries.some((c) => String(c?.iso_2 || '').toUpperCase() === toCountry) : true;
+      const countryOK = countries.length ? countries.some((c) => countryMatches(c, toCountry)) : true;
       // Weight bounds (if present on method)
       const minW = Number(m?.min_weight);
       const maxW = Number(m?.max_weight);
@@ -196,7 +225,7 @@ export async function POST(req) {
     // 3) Map to simplified options and pick price for the destination if available
     const options = filtered.map((m) => {
       const countries = Array.isArray(m?.countries) ? m.countries : [];
-      const forDest = countries.find((c) => String(c?.iso_2 || '').toUpperCase() === toCountry);
+      const forDest = countries.find((c) => countryMatches(c, toCountry));
       const rawPrice = (forDest?.price ?? m?.price);
       const price = Number(rawPrice);
       const transit = m?.transit_time || m?.delivery_time;
@@ -226,6 +255,6 @@ export async function POST(req) {
     cache.set(key, { data: options, ts: now });
     return jsonOK(options);
   } catch (e) {
-    return jsonErr(502, { error: String(e?.message || e) });
+    return jsonErr(502, { error: extractError(e, String(e?.message || e)) });
   }
 }
