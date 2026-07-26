@@ -21,7 +21,7 @@ export default function StockPage() {
 
   // Add product modal
   const [showAddModal, setShowAddModal] = useState(false);
-  const [addForm, setAddForm] = useState({ name: '', type: 'Collier', price: '', desc: '', collection: '' });
+  const [addForm, setAddForm] = useState({ name: '', type: 'Collier', price: '', desc: '', collection: '', carousel: false, visible: true });
   const [addImages, setAddImages] = useState([]);
   const [adding, setAdding] = useState(false);
   const [addError, setAddError] = useState('');
@@ -34,7 +34,7 @@ export default function StockPage() {
   // Product detail/edit modal
   const [detailProduct, setDetailProduct] = useState(null);
   const [editMode, setEditMode] = useState(false);
-  const [editForm, setEditForm] = useState({ name: '', type: '', price: '', description: '', collection: '' });
+  const [editForm, setEditForm] = useState({ name: '', type: '', price: '', description: '', collection: '', carousel: false, visible: true });
   const [savingEdit, setSavingEdit] = useState(false);
   const [editError, setEditError] = useState('');
   const [detailImageIdx, setDetailImageIdx] = useState(0);
@@ -43,7 +43,7 @@ export default function StockPage() {
 
   // Collection modal
   const [showCollectionModal, setShowCollectionModal] = useState(false);
-  const [collectionForm, setCollectionForm] = useState({ name: '', description: '', rowIndex: null });
+  const [collectionForm, setCollectionForm] = useState({ name: '', description: '', rowIndex: null, visible: true });
   const [collectionSaving, setCollectionSaving] = useState(false);
   const [collectionError, setCollectionError] = useState('');
   const [deleteCollectionTarget, setDeleteCollectionTarget] = useState(null);
@@ -187,6 +187,8 @@ export default function StockPage() {
       price: product.price || '',
       description: product.description || '',
       collection: product.collection || '',
+      carousel: product.carousel || false,
+      visible: product.visible !== false,
     });
   };
 
@@ -207,6 +209,8 @@ export default function StockPage() {
           price: editForm.price,
           description: editForm.description,
           collection: editForm.collection,
+          carousel: editForm.carousel,
+          visible: editForm.visible,
           images,
         }),
       });
@@ -279,13 +283,15 @@ export default function StockPage() {
           price: addForm.price,
           description: addForm.desc,
           collection: addForm.collection,
+          carousel: addForm.carousel,
+          visible: addForm.visible,
           images: addImages.map(img => ({ name: img.name, mimeType: img.mimeType, data: img.data })),
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setShowAddModal(false);
-      setAddForm({ name: '', type: 'Collier', price: '', desc: '', collection: '' });
+      setAddForm({ name: '', type: 'Collier', price: '', desc: '', collection: '', carousel: false, visible: true });
       setAddImages([]);
       loadStock();
     } catch (e) {
@@ -306,12 +312,12 @@ export default function StockPage() {
       const res = await fetch('/api/stock/collections', {
         method: isEdit ? 'PATCH' : 'POST',
         headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
-        body: JSON.stringify(isEdit ? collectionForm : { name: collectionForm.name, description: collectionForm.description }),
+        body: JSON.stringify(isEdit ? collectionForm : { name: collectionForm.name, description: collectionForm.description, visible: collectionForm.visible }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setShowCollectionModal(false);
-      setCollectionForm({ name: '', description: '', rowIndex: null });
+      setCollectionForm({ name: '', description: '', rowIndex: null, visible: true });
       loadCollections();
     } catch (e) {
       setCollectionError(e.message);
@@ -494,6 +500,8 @@ export default function StockPage() {
                         <span style={productCat}>{p.category}</span>
                       </div>
                       {p.collection && <span style={collBadge}>{p.collection}</span>}
+                      {p.carousel && <span style={{ ...collBadge, background: '#8b735530', color: '#8b7355' }}>Carousel</span>}
+                      {p.visible === false && <span style={{ ...collBadge, background: '#b33a3a20', color: '#b33a3a' }}>Masqué</span>}
                       {p.description && <div style={productDesc}>{p.description}</div>}
                     </div>
                     <div style={productActions} onClick={e => e.stopPropagation()}>
@@ -527,12 +535,13 @@ export default function StockPage() {
                   <div style={{ flex: 1 }}>
                     <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 18, fontWeight: 500 }}>{c.name}</div>
                     {c.description && <div style={{ fontSize: 12, color: '#8a8278', marginTop: 4 }}>{c.description}</div>}
-                    <div style={{ fontSize: 11, color: '#8a8278', marginTop: 4 }}>
-                      {products.filter(p => p.collection === c.name).length} produit(s)
+                    <div style={{ fontSize: 11, color: '#8a8278', marginTop: 4, display: 'flex', gap: 12 }}>
+                      <span>{products.filter(p => p.collection === c.name).length} produit(s)</span>
+                      <span style={{ color: c.visible !== false ? '#8b7355' : '#b33a3a' }}>{c.visible !== false ? '✓ Visible' : '✗ Masquée'}</span>
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: 6 }}>
-                    <button onClick={() => { setCollectionForm({ name: c.name, description: c.description, rowIndex: c.rowIndex }); setShowCollectionModal(true); }} style={btnSm}>Éditer</button>
+                    <button onClick={() => { setCollectionForm({ name: c.name, description: c.description, rowIndex: c.rowIndex, visible: c.visible !== false }); setShowCollectionModal(true); }} style={btnSm}>Éditer</button>
                     <button onClick={() => setDeleteCollectionTarget(c)} style={btnDeleteFull}>Supprimer</button>
                   </div>
                 </div>
@@ -585,6 +594,20 @@ export default function StockPage() {
                   onChange={e => setAddForm({ ...addForm, desc: e.target.value })}
                   style={{ ...inputStyle, minHeight: 70, resize: 'vertical' }} placeholder="Description…" />
               </div>
+              <div style={{ ...fieldGroup, display: 'flex', gap: 20 }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 13, color: '#2a2520' }}>
+                  <input type="checkbox" checked={addForm.carousel}
+                    onChange={e => setAddForm({ ...addForm, carousel: e.target.checked })}
+                    style={{ width: 16, height: 16, cursor: 'pointer' }} />
+                  Carousel
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 13, color: '#2a2520' }}>
+                  <input type="checkbox" checked={addForm.visible}
+                    onChange={e => setAddForm({ ...addForm, visible: e.target.checked })}
+                    style={{ width: 16, height: 16, cursor: 'pointer' }} />
+                  Visible sur le site
+                </label>
+              </div>
               <div style={fieldGroup}>
                 <label style={labelStyle}>Images * (minimum 1, maximum 5)</label>
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
@@ -630,6 +653,14 @@ export default function StockPage() {
                 <textarea value={collectionForm.description}
                   onChange={e => setCollectionForm({ ...collectionForm, description: e.target.value })}
                   style={{ ...inputStyle, minHeight: 60, resize: 'vertical' }} placeholder="Description de la collection…" />
+              </div>
+              <div style={{ ...fieldGroup, display: 'flex', gap: 20 }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 13, color: '#2a2520' }}>
+                  <input type="checkbox" checked={collectionForm.visible}
+                    onChange={e => setCollectionForm({ ...collectionForm, visible: e.target.checked })}
+                    style={{ width: 16, height: 16, cursor: 'pointer' }} />
+                  Visible sur le site
+                </label>
               </div>
               {collectionError && <p style={{ color: '#b33a3a', fontSize: 13, marginBottom: 12 }}>{collectionError}</p>}
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
@@ -743,6 +774,14 @@ export default function StockPage() {
                     <span style={{ fontSize: 11, color: '#8a8278', textTransform: 'uppercase', letterSpacing: 0.5 }}>Collection</span>
                     <span style={collBadge}>{detailProduct.collection || '—'}</span>
                   </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: 11, color: '#8a8278', textTransform: 'uppercase', letterSpacing: 0.5 }}>Carousel</span>
+                    <span style={{ fontSize: 12, color: detailProduct.carousel ? '#8b7355' : '#8a8278' }}>{detailProduct.carousel ? '✓ Oui' : '—'}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: 11, color: '#8a8278', textTransform: 'uppercase', letterSpacing: 0.5 }}>Visible</span>
+                    <span style={{ fontSize: 12, color: detailProduct.visible !== false ? '#8b7355' : '#b33a3a' }}>{detailProduct.visible !== false ? '✓ Oui' : '✗ Masqué'}</span>
+                  </div>
                   {detailProduct.description && (
                     <div>
                       <span style={{ fontSize: 11, color: '#8a8278', textTransform: 'uppercase', letterSpacing: 0.5, display: 'block', marginBottom: 4 }}>Description</span>
@@ -797,6 +836,20 @@ export default function StockPage() {
                   <textarea value={editForm.description}
                     onChange={e => setEditForm({ ...editForm, description: e.target.value })}
                     style={{ ...inputStyle, minHeight: 70, resize: 'vertical' }} />
+                </div>
+                <div style={{ ...fieldGroup, display: 'flex', gap: 20 }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 13, color: '#2a2520' }}>
+                    <input type="checkbox" checked={editForm.carousel}
+                      onChange={e => setEditForm({ ...editForm, carousel: e.target.checked })}
+                      style={{ width: 16, height: 16, cursor: 'pointer' }} />
+                    Carousel
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 13, color: '#2a2520' }}>
+                    <input type="checkbox" checked={editForm.visible}
+                      onChange={e => setEditForm({ ...editForm, visible: e.target.checked })}
+                      style={{ width: 16, height: 16, cursor: 'pointer' }} />
+                    Visible sur le site
+                  </label>
                 </div>
                 <div style={fieldGroup}>
                   <label style={labelStyle}>Images (max 5)</label>
