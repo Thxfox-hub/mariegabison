@@ -22,7 +22,7 @@ export default function Categories() {
           if (c) catSet[c] = (catSet[c] || 0) + 1;
         });
         // Always show all known categories, even without products
-        const ALL_CATS = ['Collier', 'Bracelet', "Boucles d'oreille", 'Bague', 'Parure'];
+        const ALL_CATS = ['Collier', 'Bracelet', "Boucles d'oreille"];
         const derived = ALL_CATS.map((name) => ({
           name,
           description: catSet[name] ? '' : t('landing.comingSoon'),
