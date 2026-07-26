@@ -21,16 +21,19 @@ export default function Categories() {
           const c = it.category || '';
           if (c) catSet[c] = (catSet[c] || 0) + 1;
         });
-        const derived = Object.keys(catSet).map((name) => ({
+        // Always show all known categories, even without products
+        const ALL_CATS = ['Collier', 'Bracelet', "Boucles d'oreille", 'Bague', 'Parure'];
+        const derived = ALL_CATS.map((name) => ({
           name,
-          description: '',
+          description: catSet[name] ? '' : t('landing.comingSoon'),
           href: `/?cat=${encodeURIComponent(name)}`,
+          hasProducts: !!catSet[name],
         }));
-        if (derived.length > 0) setCats(derived);
+        setCats(derived);
       } catch {}
     }
     load();
-  }, []);
+  }, [t]);
 
   if (cats.length === 0) return null;
 
@@ -48,7 +51,7 @@ export default function Categories() {
 
         <div className="grid grid-cols-1 gap-px bg-ink/10 sm:grid-cols-3">
           {cats.map((category) => (
-            <RippleLink key={category.name} href={category.href} name={category.name} description={category.description} t={t} />
+            <RippleLink key={category.name} href={category.href} name={category.name} description={category.description} t={t} hasProducts={category.hasProducts} />
           ))}
         </div>
       </div>
@@ -56,7 +59,7 @@ export default function Categories() {
   );
 }
 
-function RippleLink({ href, name, description, t }) {
+function RippleLink({ href, name, description, t, hasProducts }) {
   const ref = useRef(null);
   const [ripple, setRipple] = useState({ x: 0, y: 0, visible: false });
   const [touched, setTouched] = useState(false);
@@ -146,7 +149,7 @@ function RippleLink({ href, name, description, t }) {
           {description}
         </p>
         <span className="mt-6 inline-block font-sans text-[10px] font-light uppercase tracking-[0.28em] text-ink/50 transition-colors duration-300" style={{ color: ripple.visible ? '#fff' : undefined }}>
-          {t('landing.explore')}
+          {hasProducts ? t('landing.explore') : t('landing.comingSoon')}
         </span>
       </div>
     </Link>
