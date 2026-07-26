@@ -45,6 +45,7 @@ export default function ProductPage() {
   const [imgLoaded, setImgLoaded] = useState(false);
   const [visible, setVisible] = useState(false);
   const [activeImg, setActiveImg] = useState(0);
+  const [lightbox, setLightbox] = useState(false);
 
   useEffect(() => {
     requestAnimationFrame(() => setVisible(true));
@@ -153,6 +154,8 @@ export default function ProductPage() {
                   const fallback = getPlaceholder(item.title);
                   if (e.currentTarget.src !== fallback) e.currentTarget.src = fallback;
                 }}
+                onClick={() => setLightbox(true)}
+                style={{ cursor: 'zoom-in' }}
               />
               {!imgLoaded && <div className="product-image-skeleton" />}
               {allImages.length > 1 && (
@@ -206,7 +209,8 @@ export default function ProductPage() {
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                      onClick={() => { setActiveImg(idx); setImgLoaded(false); setLightbox(true); }} />
                   </button>
                 ))}
               </div>
@@ -296,6 +300,69 @@ export default function ProductPage() {
           </div>
         </div>
       </div>
+
+      {/* ===== Fullscreen Lightbox ===== */}
+      {lightbox && allImages.length > 0 && (
+        <div
+          onClick={() => setLightbox(false)}
+          style={{
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.92)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 9999, cursor: 'zoom-out',
+          }}
+        >
+          <button
+            onClick={(e) => { e.stopPropagation(); setLightbox(false); }}
+            style={{
+              position: 'absolute', top: 20, right: 24, width: 40, height: 40,
+              borderRadius: '50%', border: 'none', background: 'rgba(255,255,255,0.15)',
+              color: '#fff', fontSize: 24, cursor: 'pointer', display: 'flex',
+              alignItems: 'center', justifyContent: 'center',
+            }}
+          >×</button>
+          {allImages.length > 1 && (
+            <>
+              <button
+                onClick={(e) => { e.stopPropagation(); goPrev(); }}
+                style={{
+                  position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)',
+                  width: 48, height: 48, borderRadius: '50%', border: 'none',
+                  background: 'rgba(255,255,255,0.15)', color: '#fff', fontSize: 24,
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}
+              >‹</button>
+              <button
+                onClick={(e) => { e.stopPropagation(); goNext(); }}
+                style={{
+                  position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)',
+                  width: 48, height: 48, borderRadius: '50%', border: 'none',
+                  background: 'rgba(255,255,255,0.15)', color: '#fff', fontSize: 24,
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}
+              >›</button>
+            </>
+          )}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={allImages[activeImg] || imgSrc}
+            alt={item.title || ''}
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: '90vw', maxHeight: '90vh', objectFit: 'contain',
+              borderRadius: 4, cursor: 'default',
+            }}
+          />
+          {allImages.length > 1 && (
+            <span
+              style={{
+                position: 'absolute', bottom: 20, left: '50%', transform: 'translateX(-50%)',
+                color: '#fff', fontSize: 13, background: 'rgba(0,0,0,0.5)',
+                padding: '4px 12px', borderRadius: 12,
+              }}
+            >{activeImg + 1} / {allImages.length}</span>
+          )}
+        </div>
+      )}
     </main>
   );
 }
