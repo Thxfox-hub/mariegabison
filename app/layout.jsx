@@ -10,6 +10,7 @@ import { I18nProvider } from '../lib/i18n/context';
 import { UserProvider } from '../components/UserProvider';
 import Footer from '../components/Footer';
 import AppShell from '../components/AppShell';
+import { Analytics } from '@vercel/analytics/next';
 
 const cormorant = Cormorant_Garamond({
   subsets: ['latin'],
@@ -45,6 +46,7 @@ export default function RootLayout({ children }) {
             </CartProvider>
           </UserProvider>
         </I18nProvider>
+        <Analytics />
       </body>
     </html>
   );
