@@ -49,13 +49,15 @@ export default function JewelryGrid({ items = [], title }) {
               style={{ animationDelay: `${0.08 * (index % 3)}s` }}
             >
               <div className="relative aspect-[3/4] overflow-hidden bg-pearl">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={piece.imageUrl || piece.image || ""}
-                  alt={piece.title || piece.name || ""}
-                  loading="lazy"
-                  className="h-full w-full object-cover"
-                />
+                <Link href={href} className="block h-full w-full">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={piece.imageUrl || piece.image || ""}
+                    alt={piece.title || piece.name || ""}
+                    loading="lazy"
+                    className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  />
+                </Link>
 
                 <div className="absolute inset-x-0 bottom-0 flex translate-y-2 flex-col gap-2 p-5 opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100 backdrop-blur-[2px] bg-gradient-to-t from-blanc/60 to-transparent">
                   <Link

@@ -16,6 +16,11 @@ const nextConfig = {
   turbopack: {
     root: __dirname,
   },
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '100mb',
+    },
+  },
   env: {
     // Rend la clé publique Stripe disponible côté client sans exiger le préfixe NEXT_PUBLIC_
     STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '',

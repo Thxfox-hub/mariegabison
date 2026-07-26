@@ -53,7 +53,8 @@ function HomeContent() {
           if (cached) {
             const arr = JSON.parse(cached);
             if (Array.isArray(arr) && arr.length > 0) {
-              setItems(arr);
+              const visibleArr = arr.filter(it => it.visible !== false);
+              setItems(visibleArr);
               setStatus('ready');
               hasCache = true;
             }
@@ -62,14 +63,15 @@ function HomeContent() {
 
         // 2. Always fetch fresh data in background (stale-while-revalidate)
         if (!hasCache) setStatus('loading');
-        const res = await fetch('/api/catalog', { signal: controller.signal });
+        const res = await fetch('/api/catalog?force=1', { signal: controller.signal });
         if (res.ok) {
           const data = await res.json();
           const arr = Array.isArray(data) ? data : data.data || data.items || [];
           if (arr.length > 0) {
-            setItems(arr);
+            const visibleArr = arr.filter(it => it.visible !== false);
+            setItems(visibleArr);
             setStatus('ready');
-            try { localStorage.setItem('mariegabison_catalog', JSON.stringify(arr)); } catch {}
+            try { localStorage.setItem('mariegabison_catalog', JSON.stringify(visibleArr)); } catch {}
           }
         } else if (!hasCache) {
           throw new Error('API error');
@@ -131,10 +133,8 @@ function HomeContent() {
 
       {/* ===== Product Grid (GAS catalog) ===== */}
       {status === 'loading' && (
-        <section className="mx-auto max-w-6xl px-4 pb-24 sm:px-6">
-          <div className="grid grid-cols-1 gap-x-6 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
-            <SkeletonCard key={0} />
-          </div>
+        <section className="mx-auto max-w-6xl px-4 pb-24 sm:px-6 text-center">
+          <p className="font-serif text-2xl font-light tracking-[0.06em] text-ink-soft">{t('landing.comingSoon')}</p>
         </section>
       )}
 
@@ -157,9 +157,7 @@ function HomeContent() {
           />
         ) : (
           <section className="mx-auto max-w-6xl px-4 pb-24 sm:px-6 text-center">
-            <div className="status" style={{ textAlign: 'center', padding: '40px 0' }}>
-              {t('search.noResults')}
-            </div>
+            <p className="font-serif text-2xl font-light tracking-[0.06em] text-ink-soft">{t('landing.comingSoon')}</p>
           </section>
         )
       )}

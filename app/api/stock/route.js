@@ -64,12 +64,12 @@ export async function POST(req) {
     // body: { name, type, price, description, collection, images: [{ name, mimeType, data }] }
 
     if (!body.name?.trim()) return json({ error: 'Le nom est obligatoire' }, 400);
-    if (!body.images?.length) return json({ error: 'Au moins une image est obligatoire' }, 400);
-    // Limit to 5 images, 10MB each
-    if (body.images.length > 5) return json({ error: 'Maximum 5 images' }, 400);
+    if (!body.images?.length) return json({ error: 'Au moins un média est obligatoire' }, 400);
+    // Limit to 5 media files, 100MB each
+    if (body.images.length > 5) return json({ error: 'Maximum 5 médias' }, 400);
     for (const img of body.images) {
-      if (img.data && Buffer.byteLength(img.data, 'base64') > 10 * 1024 * 1024) {
-        return json({ error: 'Image trop volumineuse (10 MB max)' }, 400);
+      if (img.data && Buffer.byteLength(img.data, 'base64') > 100 * 1024 * 1024) {
+        return json({ error: 'Média trop volumineux (100 MB max)' }, 400);
       }
     }
 

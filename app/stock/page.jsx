@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Images, Eye, EyeOff, GalleryHorizontalEnd, Check, X } from 'lucide-react';
+import { Images, Eye, EyeOff, GalleryHorizontalEnd, Check, X, GripVertical } from 'lucide-react';
 
 function ToggleBox({ checked, onChange, label, icon, desc }) {
   return (
@@ -85,6 +85,27 @@ export default function StockPage() {
   const [collectionSaving, setCollectionSaving] = useState(false);
   const [collectionError, setCollectionError] = useState('');
   const [deleteCollectionTarget, setDeleteCollectionTarget] = useState(null);
+
+  // ─── Image drag reorder ───
+  const [dragIndex, setDragIndex] = useState(null);
+  const [dragOverIndex, setDragOverIndex] = useState(null);
+  const [touchDragIndex, setTouchDragIndex] = useState(null);
+  const [touchDragOver, setTouchDragOver] = useState(null);
+
+  function reorderAddImages(from, to) {
+    if (from === null || to === null || from === to) return;
+    const arr = [...addImages];
+    const [moved] = arr.splice(from, 1);
+    arr.splice(to, 0, moved);
+    setAddImages(arr);
+  }
+  function reorderEditImages(from, to) {
+    if (from === null || to === null || from === to) return;
+    const arr = [...editImages];
+    const [moved] = arr.splice(from, 1);
+    arr.splice(to, 0, moved);
+    setEditImages(arr);
+  }
 
   // ─── Auth ───
   const [authLoading, setAuthLoading] = useState(false);
@@ -632,7 +653,8 @@ export default function StockPage() {
                 <label style={labelStyle}>Description</label>
                 <textarea value={addForm.desc}
                   onChange={e => setAddForm({ ...addForm, desc: e.target.value })}
-                  style={{ ...inputStyle, minHeight: 70, resize: 'vertical' }} placeholder="Description…" />
+                  style={{ ...inputStyle, minHeight: 70, height: 'auto', resize: 'none', overflow: 'hidden' }} placeholder="Description…"
+                  onInput={e => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }} />
               </div>
               <div style={{ ...fieldGroup, display: 'flex', gap: 12 }}>
                 <ToggleBox
@@ -651,11 +673,34 @@ export default function StockPage() {
                 />
               </div>
               <div style={fieldGroup}>
-                <label style={labelStyle}>Images * (minimum 1, maximum 5)</label>
+                <label style={labelStyle}>Médias * (minimum 1, maximum 5 — images ou vidéos)</label>
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
                   {addImages.map((img, i) => (
-                    <div key={i} style={{ position: 'relative', width: 80, height: 80 }}>
-                      <img src={img.preview} alt="" style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, border: '1px solid #e5e0d8' }} />
+                    <div key={i}
+                      draggable
+                      onDragStart={() => setDragIndex(i)}
+                      onDragOver={e => { e.preventDefault(); setDragOverIndex(i); }}
+                      onDragEnd={() => { reorderAddImages(dragIndex, dragOverIndex); setDragIndex(null); setDragOverIndex(null); }}
+                      onDrop={e => { e.preventDefault(); reorderAddImages(dragIndex, i); setDragIndex(null); setDragOverIndex(null); }}
+                      onTouchStart={e => { setTouchDragIndex(i); const t = e.touches[0]; e.currentTarget.dataset.startX = t.clientX; e.currentTarget.dataset.startY = t.clientY; }}
+                      onTouchMove={e => { if (touchDragIndex === null) return; const t = e.touches[0]; const el = document.elementFromPoint(t.clientX, t.clientY); const thumb = el?.closest?.('[data-thumb]'); if (thumb) { const over = parseInt(thumb.dataset.thumb); if (!isNaN(over)) setTouchDragOver(over); } }}
+                      onTouchEnd={() => { reorderAddImages(touchDragIndex, touchDragOver); setTouchDragIndex(null); setTouchDragOver(null); }}
+                      data-thumb={i}
+                      style={{
+                        position: 'relative', width: 80, height: 80,
+                        opacity: (dragIndex === i || touchDragIndex === i) ? 0.4 : 1,
+                        border: dragOverIndex === i || touchDragOver === i ? '2px solid #8b7355' : '1px solid #e5e0d8',
+                        borderRadius: 8, cursor: 'grab', touchAction: 'none',
+                        transition: 'opacity 0.15s, border 0.15s',
+                      }}>
+                      {img.mimeType && img.mimeType.startsWith('video/') ? (
+                        <video src={img.preview} muted style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 7, pointerEvents: 'none' }} />
+                      ) : (
+                        <img src={img.preview} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 7, pointerEvents: 'none' }} />
+                      )}
+                      <div style={{ position: 'absolute', bottom: 2, left: 2, background: 'rgba(0,0,0,0.5)', borderRadius: 4, padding: '1px 3px', display: 'flex', alignItems: 'center' }}>
+                        <GripVertical size={10} color="#fff" />
+                      </div>
                       <button type="button" onClick={() => removeImage(i)} style={{ position: 'absolute', top: -6, right: -6, width: 22, height: 22, borderRadius: '50%', background: '#b33a3a', color: '#fff', border: 'none', cursor: 'pointer', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
                     </div>
                   ))}
@@ -663,8 +708,8 @@ export default function StockPage() {
                     <button type="button" onClick={() => fileInputRef.current?.click()} style={uploadBtn}>+</button>
                   )}
                 </div>
-                <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleImageSelect} style={{ display: 'none' }} />
-                <p style={{ fontSize: 11, color: '#8a8278' }}>{addImages.length} image(s) sélectionnée(s)</p>
+                <input ref={fileInputRef} type="file" accept="image/*,video/*" multiple onChange={handleImageSelect} style={{ display: 'none' }} />
+                <p style={{ fontSize: 11, color: '#8a8278' }}>{addImages.length} média(s) sélectionné(s)</p>
               </div>
               {addError && <p style={{ color: '#b33a3a', fontSize: 13, marginBottom: 12 }}>{addError}</p>}
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
@@ -694,7 +739,8 @@ export default function StockPage() {
                 <label style={labelStyle}>Description</label>
                 <textarea value={collectionForm.description}
                   onChange={e => setCollectionForm({ ...collectionForm, description: e.target.value })}
-                  style={{ ...inputStyle, minHeight: 60, resize: 'vertical' }} placeholder="Description de la collection…" />
+                  style={{ ...inputStyle, minHeight: 60, height: 'auto', resize: 'none', overflow: 'hidden' }} placeholder="Description de la collection…"
+                  onInput={e => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }} />
               </div>
               <div style={{ ...fieldGroup, display: 'flex', gap: 12 }}>
                 <ToggleBox
@@ -724,8 +770,11 @@ export default function StockPage() {
               <button onClick={() => setDeleteTarget(null)} style={closeBtn}>×</button>
             </div>
             <div style={{ padding: 20 }}>
-              <p>Supprimer <strong>{deleteTarget.title}</strong> ?</p>
-              <p style={{ fontSize: 12, color: '#8a8278', marginTop: 8 }}>Cette action est irréversible.</p>
+              <p style={{ fontSize: 14, lineHeight: 1.7, color: '#2a2520' }}>
+                Vous allez vraiment supprimer le {deleteTarget.category || 'produit'} <strong>{deleteTarget.title}</strong>.<br/>
+                Êtes-vous sûr ?<br/>
+                <span style={{ fontSize: 12, color: '#8a8278' }}>Fait pas l'con Johnny — cette action est irréversible.</span>
+              </p>
             </div>
             <div style={{ padding: '12px 20px', borderTop: '1px solid #e5e0d8', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
               <button onClick={() => setDeleteTarget(null)} style={btnDefault}>Annuler</button>
@@ -744,8 +793,11 @@ export default function StockPage() {
               <button onClick={() => setDeleteCollectionTarget(null)} style={closeBtn}>×</button>
             </div>
             <div style={{ padding: 20 }}>
-              <p>Supprimer la collection <strong>{deleteCollectionTarget.name}</strong> ?</p>
-              <p style={{ fontSize: 12, color: '#8a8278', marginTop: 8 }}>Les produits assignés ne seront pas supprimés.</p>
+              <p style={{ fontSize: 14, lineHeight: 1.7, color: '#2a2520' }}>
+                Vous allez vraiment supprimer la collection <strong>{deleteCollectionTarget.name}</strong>.<br/>
+                Êtes-vous sûr ?<br/>
+                <span style={{ fontSize: 12, color: '#8a8278' }}>Fait pas l'con Johnny — les produits assignés ne seront pas supprimés.</span>
+              </p>
             </div>
             <div style={{ padding: '12px 20px', borderTop: '1px solid #e5e0d8', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
               <button onClick={() => setDeleteCollectionTarget(null)} style={btnDefault}>Annuler</button>
@@ -886,7 +938,8 @@ export default function StockPage() {
                   <label style={labelStyle}>Description</label>
                   <textarea value={editForm.description}
                     onChange={e => setEditForm({ ...editForm, description: e.target.value })}
-                    style={{ ...inputStyle, minHeight: 70, resize: 'vertical' }} />
+                    style={{ ...inputStyle, minHeight: 70, height: 'auto', resize: 'none', overflow: 'hidden' }}
+                    onInput={e => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }} />
                 </div>
                 <div style={{ ...fieldGroup, display: 'flex', gap: 12 }}>
                   <ToggleBox
@@ -905,13 +958,36 @@ export default function StockPage() {
                   />
                 </div>
                 <div style={fieldGroup}>
-                  <label style={labelStyle}>Images (max 5)</label>
+                  <label style={labelStyle}>Médias (max 5 — images ou vidéos)</label>
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
                     {editImages.map((img, i) => {
                       const src = typeof img === 'string' ? img : img.preview;
                       return (
-                        <div key={i} style={{ position: 'relative', width: 80, height: 80 }}>
-                          <img src={src} alt="" style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, border: '1px solid #e5e0d8' }} />
+                        <div key={i}
+                          draggable
+                          onDragStart={() => setDragIndex(i)}
+                          onDragOver={e => { e.preventDefault(); setDragOverIndex(i); }}
+                          onDragEnd={() => { reorderEditImages(dragIndex, dragOverIndex); setDragIndex(null); setDragOverIndex(null); }}
+                          onDrop={e => { e.preventDefault(); reorderEditImages(dragIndex, i); setDragIndex(null); setDragOverIndex(null); }}
+                          onTouchStart={e => { setTouchDragIndex(i); }}
+                          onTouchMove={e => { if (touchDragIndex === null) return; const t = e.touches[0]; const el = document.elementFromPoint(t.clientX, t.clientY); const thumb = el?.closest?.('[data-edit-thumb]'); if (thumb) { const over = parseInt(thumb.dataset.editThumb); if (!isNaN(over)) setTouchDragOver(over); } }}
+                          onTouchEnd={() => { reorderEditImages(touchDragIndex, touchDragOver); setTouchDragIndex(null); setTouchDragOver(null); }}
+                          data-edit-thumb={i}
+                          style={{
+                            position: 'relative', width: 80, height: 80,
+                            opacity: (dragIndex === i || touchDragIndex === i) ? 0.4 : 1,
+                            border: dragOverIndex === i || touchDragOver === i ? '2px solid #8b7355' : '1px solid #e5e0d8',
+                            borderRadius: 8, cursor: 'grab', touchAction: 'none',
+                            transition: 'opacity 0.15s, border 0.15s',
+                          }}>
+                          {typeof img === 'object' && img.mimeType && img.mimeType.startsWith('video/') ? (
+                            <video src={src} muted style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 7, pointerEvents: 'none' }} />
+                          ) : (
+                            <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 7, pointerEvents: 'none' }} />
+                          )}
+                          <div style={{ position: 'absolute', bottom: 2, left: 2, background: 'rgba(0,0,0,0.5)', borderRadius: 4, padding: '1px 3px', display: 'flex', alignItems: 'center' }}>
+                            <GripVertical size={10} color="#fff" />
+                          </div>
                           <button type="button" onClick={() => removeEditImage(i)} style={{ position: 'absolute', top: -6, right: -6, width: 22, height: 22, borderRadius: '50%', background: '#b33a3a', color: '#fff', border: 'none', cursor: 'pointer', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
                         </div>
                       );
@@ -920,8 +996,8 @@ export default function StockPage() {
                       <button type="button" onClick={() => editFileInputRef.current?.click()} style={uploadBtn}>+</button>
                     )}
                   </div>
-                  <input ref={editFileInputRef} type="file" accept="image/*" multiple onChange={handleEditImageSelect} style={{ display: 'none' }} />
-                  <p style={{ fontSize: 11, color: '#8a8278' }}>{editImages.length} image(s)</p>
+                  <input ref={editFileInputRef} type="file" accept="image/*,video/*" multiple onChange={handleEditImageSelect} style={{ display: 'none' }} />
+                  <p style={{ fontSize: 11, color: '#8a8278' }}>{editImages.length} média(s)</p>
                 </div>
                 {editError && <p style={{ color: '#b33a3a', fontSize: 13, marginBottom: 12 }}>{editError}</p>}
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
@@ -957,7 +1033,7 @@ const fieldGroup = { marginBottom: 14 };
 const btnPrimary = { padding: '8px 16px', background: '#8b7355', color: '#fff', border: '1px solid #8b7355', borderRadius: 8, fontSize: 13, fontFamily: 'inherit', cursor: 'pointer' };
 const btnDefault = { padding: '8px 16px', background: '#fff', color: '#2a2520', border: '1px solid #e5e0d8', borderRadius: 8, fontSize: 13, fontFamily: 'inherit', cursor: 'pointer' };
 const btnSm = { padding: '5px 10px', background: '#fff', color: '#2a2520', border: '1px solid #e5e0d8', borderRadius: 8, fontSize: 12, fontFamily: 'inherit', cursor: 'pointer' };
-const btnDeleteFull = { padding: '8px 16px', background: '#b33a3a', color: '#fff', border: '1px solid #b33a3a', borderRadius: 8, fontSize: 13, fontFamily: 'inherit', cursor: 'pointer', fontWeight: 500 };
+const btnDeleteFull = { padding: '8px 16px', background: '#000', color: '#fff', border: '1px solid #000', borderRadius: 8, fontSize: 13, fontFamily: 'inherit', cursor: 'pointer', fontWeight: 500 };
 
 const catBtn = { padding: '6px 14px', border: '1px solid #e5e0d8', borderRadius: 999, background: '#fff', color: '#8a8278', fontSize: 12, fontFamily: 'inherit', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: 0.3 };
 const catActive = { padding: '6px 14px', border: '1px solid #8b7355', borderRadius: 999, background: '#8b7355', color: '#fff', fontSize: 12, fontFamily: 'inherit', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: 0.3 };
