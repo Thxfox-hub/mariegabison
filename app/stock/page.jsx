@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { Images, Eye, EyeOff, GalleryHorizontalEnd, Check, X } from 'lucide-react';
 
 export default function StockPage() {
   const [authed, setAuthed] = useState(false);
@@ -500,8 +501,8 @@ export default function StockPage() {
                         <span style={productCat}>{p.category}</span>
                       </div>
                       {p.collection && <span style={collBadge}>{p.collection}</span>}
-                      {p.carousel && <span style={{ ...collBadge, background: '#8b735530', color: '#8b7355' }}>🎠 Carousel</span>}
-                      {p.visible === false && <span style={{ ...collBadge, background: '#b33a3a20', color: '#b33a3a' }}>🙈 Masqué</span>}
+                      {p.carousel && <span style={{ ...collBadge, background: '#8b735530', color: '#8b7355', display: 'inline-flex', alignItems: 'center', gap: 3 }}><GalleryHorizontalEnd size={11} /> Carousel</span>}
+                      {p.visible === false && <span style={{ ...collBadge, background: '#b33a3a20', color: '#b33a3a', display: 'inline-flex', alignItems: 'center', gap: 3 }}><EyeOff size={11} /> Masqué</span>}
                       {p.description && <div style={productDesc}>{p.description}</div>}
                     </div>
                     <div style={productActions} onClick={e => e.stopPropagation()}>
@@ -535,9 +536,11 @@ export default function StockPage() {
                   <div style={{ flex: 1 }}>
                     <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 18, fontWeight: 500 }}>{c.name}</div>
                     {c.description && <div style={{ fontSize: 12, color: '#8a8278', marginTop: 4 }}>{c.description}</div>}
-                    <div style={{ fontSize: 11, color: '#8a8278', marginTop: 4, display: 'flex', gap: 12 }}>
+                    <div style={{ fontSize: 11, color: '#8a8278', marginTop: 4, display: 'flex', gap: 12, alignItems: 'center' }}>
                       <span>{products.filter(p => p.collection === c.name).length} produit(s)</span>
-                      <span style={{ color: c.visible !== false ? '#8b7355' : '#b33a3a' }}>{c.visible !== false ? '👁 Visible' : '🙈 Masquée'}</span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 3, color: c.visible !== false ? '#8b7355' : '#b33a3a' }}>
+                        {c.visible !== false ? <><Eye size={12} /> Visible</> : <><EyeOff size={12} /> Masquée</>}
+                      </span>
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: 6 }}>
@@ -594,18 +597,26 @@ export default function StockPage() {
                   onChange={e => setAddForm({ ...addForm, desc: e.target.value })}
                   style={{ ...inputStyle, minHeight: 70, resize: 'vertical' }} placeholder="Description…" />
               </div>
-              <div style={{ ...fieldGroup, display: 'flex', gap: 20 }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 13, color: '#2a2520' }}>
-                  <input type="checkbox" checked={addForm.carousel}
-                    onChange={e => setAddForm({ ...addForm, carousel: e.target.checked })}
-                    style={{ width: 16, height: 16, cursor: 'pointer' }} />
-                  🎠 Carousel
+              <div style={{ ...fieldGroup, display: 'flex', gap: 24 }}>
+                <label style={{ display: 'flex', flexDirection: 'column', gap: 4, cursor: 'pointer' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#2a2520' }}>
+                    <GalleryHorizontalEnd size={15} color="#8b7355" />
+                    <span>Afficher dans le carousel</span>
+                    <input type="checkbox" checked={addForm.carousel}
+                      onChange={e => setAddForm({ ...addForm, carousel: e.target.checked })}
+                      style={{ width: 15, height: 15, cursor: 'pointer', marginLeft: 2 }} />
+                  </div>
+                  <span style={{ fontSize: 11, color: '#a89e8e', marginLeft: 21 }}>Mis en avant accueil</span>
                 </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 13, color: '#2a2520' }}>
-                  <input type="checkbox" checked={addForm.visible}
-                    onChange={e => setAddForm({ ...addForm, visible: e.target.checked })}
-                    style={{ width: 16, height: 16, cursor: 'pointer' }} />
-                  👁 Afficher sur le site
+                <label style={{ display: 'flex', flexDirection: 'column', gap: 4, cursor: 'pointer' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#2a2520' }}>
+                    {addForm.visible ? <Eye size={15} color="#8b7355" /> : <EyeOff size={15} color="#b33a3a" />}
+                    <span>Visible sur le site</span>
+                    <input type="checkbox" checked={addForm.visible}
+                      onChange={e => setAddForm({ ...addForm, visible: e.target.checked })}
+                      style={{ width: 15, height: 15, cursor: 'pointer', marginLeft: 2 }} />
+                  </div>
+                  <span style={{ fontSize: 11, color: '#a89e8e', marginLeft: 21 }}>Affiché aux visiteurs</span>
                 </label>
               </div>
               <div style={fieldGroup}>
@@ -654,12 +665,16 @@ export default function StockPage() {
                   onChange={e => setCollectionForm({ ...collectionForm, description: e.target.value })}
                   style={{ ...inputStyle, minHeight: 60, resize: 'vertical' }} placeholder="Description de la collection…" />
               </div>
-              <div style={{ ...fieldGroup, display: 'flex', gap: 20 }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 13, color: '#2a2520' }}>
-                  <input type="checkbox" checked={collectionForm.visible}
-                    onChange={e => setCollectionForm({ ...collectionForm, visible: e.target.checked })}
-                    style={{ width: 16, height: 16, cursor: 'pointer' }} />
-                  👁 Afficher sur le site
+              <div style={{ ...fieldGroup, display: 'flex', gap: 24 }}>
+                <label style={{ display: 'flex', flexDirection: 'column', gap: 4, cursor: 'pointer' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#2a2520' }}>
+                    {collectionForm.visible ? <Eye size={15} color="#8b7355" /> : <EyeOff size={15} color="#b33a3a" />}
+                    <span>Visible sur le site</span>
+                    <input type="checkbox" checked={collectionForm.visible}
+                      onChange={e => setCollectionForm({ ...collectionForm, visible: e.target.checked })}
+                      style={{ width: 15, height: 15, cursor: 'pointer', marginLeft: 2 }} />
+                  </div>
+                  <span style={{ fontSize: 11, color: '#a89e8e', marginLeft: 21 }}>Affiché aux visiteurs</span>
                 </label>
               </div>
               {collectionError && <p style={{ color: '#b33a3a', fontSize: 13, marginBottom: 12 }}>{collectionError}</p>}
@@ -775,12 +790,20 @@ export default function StockPage() {
                     <span style={collBadge}>{detailProduct.collection || '—'}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: 11, color: '#8a8278', textTransform: 'uppercase', letterSpacing: 0.5 }}>🎠 Carousel</span>
-                    <span style={{ fontSize: 12, color: detailProduct.carousel ? '#8b7355' : '#8a8278' }}>{detailProduct.carousel ? '✓ Oui' : '—'}</span>
+                    <span style={{ fontSize: 11, color: '#8a8278', textTransform: 'uppercase', letterSpacing: 0.5, display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <GalleryHorizontalEnd size={12} /> Carousel
+                    </span>
+                    <span style={{ fontSize: 12, color: detailProduct.carousel ? '#8b7355' : '#8a8278', display: 'flex', alignItems: 'center', gap: 4 }}>
+                      {detailProduct.carousel ? <><Check size={13} /> Oui</> : '—'}
+                    </span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: 11, color: '#8a8278', textTransform: 'uppercase', letterSpacing: 0.5 }}>👁 Visible</span>
-                    <span style={{ fontSize: 12, color: detailProduct.visible !== false ? '#8b7355' : '#b33a3a' }}>{detailProduct.visible !== false ? '✓ Oui' : '✗ Masqué'}</span>
+                    <span style={{ fontSize: 11, color: '#8a8278', textTransform: 'uppercase', letterSpacing: 0.5, display: 'flex', alignItems: 'center', gap: 4 }}>
+                      {detailProduct.visible !== false ? <Eye size={12} /> : <EyeOff size={12} />} Visible
+                    </span>
+                    <span style={{ fontSize: 12, color: detailProduct.visible !== false ? '#8b7355' : '#b33a3a', display: 'flex', alignItems: 'center', gap: 4 }}>
+                      {detailProduct.visible !== false ? <><Check size={13} /> Oui</> : <><X size={13} /> Masqué</>}
+                    </span>
                   </div>
                   {detailProduct.description && (
                     <div>
@@ -837,18 +860,26 @@ export default function StockPage() {
                     onChange={e => setEditForm({ ...editForm, description: e.target.value })}
                     style={{ ...inputStyle, minHeight: 70, resize: 'vertical' }} />
                 </div>
-                <div style={{ ...fieldGroup, display: 'flex', gap: 20 }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 13, color: '#2a2520' }}>
-                    <input type="checkbox" checked={editForm.carousel}
-                      onChange={e => setEditForm({ ...editForm, carousel: e.target.checked })}
-                      style={{ width: 16, height: 16, cursor: 'pointer' }} />
-                    🎠 Carousel
+                <div style={{ ...fieldGroup, display: 'flex', gap: 24 }}>
+                  <label style={{ display: 'flex', flexDirection: 'column', gap: 4, cursor: 'pointer' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#2a2520' }}>
+                      <GalleryHorizontalEnd size={15} color="#8b7355" />
+                      <span>Afficher dans le carousel</span>
+                      <input type="checkbox" checked={editForm.carousel}
+                        onChange={e => setEditForm({ ...editForm, carousel: e.target.checked })}
+                        style={{ width: 15, height: 15, cursor: 'pointer', marginLeft: 2 }} />
+                    </div>
+                    <span style={{ fontSize: 11, color: '#a89e8e', marginLeft: 21 }}>Mis en avant accueil</span>
                   </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 13, color: '#2a2520' }}>
-                    <input type="checkbox" checked={editForm.visible}
-                      onChange={e => setEditForm({ ...editForm, visible: e.target.checked })}
-                      style={{ width: 16, height: 16, cursor: 'pointer' }} />
-                    👁 Afficher sur le site
+                  <label style={{ display: 'flex', flexDirection: 'column', gap: 4, cursor: 'pointer' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#2a2520' }}>
+                      {editForm.visible ? <Eye size={15} color="#8b7355" /> : <EyeOff size={15} color="#b33a3a" />}
+                      <span>Visible sur le site</span>
+                      <input type="checkbox" checked={editForm.visible}
+                        onChange={e => setEditForm({ ...editForm, visible: e.target.checked })}
+                        style={{ width: 15, height: 15, cursor: 'pointer', marginLeft: 2 }} />
+                    </div>
+                    <span style={{ fontSize: 11, color: '#a89e8e', marginLeft: 21 }}>Affiché aux visiteurs</span>
                   </label>
                 </div>
                 <div style={fieldGroup}>
