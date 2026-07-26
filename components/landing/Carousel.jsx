@@ -31,7 +31,7 @@ export default function Carousel() {
     fetchedRef.current = true;
     async function load() {
       try {
-        const res = await fetch('/api/catalog', { cache: 'no-store' });
+        const res = await fetch('/api/catalog?force=1', { cache: 'no-store' });
         if (!res.ok) return;
         const data = await res.json();
         const arr = Array.isArray(data) ? data : data.data || data.items || [];
