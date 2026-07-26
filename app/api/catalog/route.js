@@ -214,6 +214,8 @@ export async function GET(req) {
         weight_g: it.weight_g ?? it.weightG ?? undefined,
         weight_mg: it.weight_mg ?? it.weightMg ?? undefined,
         weight: it.weight ?? undefined,
+        carousel: it.carousel === true,
+        visible: it.visible !== false,
       }));
     CATALOG_CACHE = { ts: Date.now(), items };
     return new Response(pretty ? JSON.stringify(items, null, 2) : JSON.stringify(items), {
