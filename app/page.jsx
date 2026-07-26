@@ -88,8 +88,9 @@ function HomeContent() {
 
   // Filter by category when ?cat= is present (from Categories links)
   const filteredItems = useMemo(() => {
-    if (!catParam) return items;
-    return items.filter(it => {
+    const visibleItems = items.filter(it => it.visible !== false);
+    if (!catParam) return visibleItems;
+    return visibleItems.filter(it => {
       const cat = (it.category || '').toLowerCase();
       const target = catParam.toLowerCase();
       return cat === target || cat.includes(target) || target.includes(cat);

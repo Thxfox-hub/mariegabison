@@ -1,12 +1,39 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { categories as CATEGORIES } from "../../lib/landing-data";
 import { useTranslation } from "../../lib/i18n/context";
 
 export default function Categories() {
   const { t } = useTranslation();
+  const [cats, setCats] = useState([]);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const res = await fetch('/api/catalog', { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = await res.json();
+        const arr = Array.isArray(data) ? data : data.data || data.items || [];
+        // Derive unique categories from products
+        const catSet = {};
+        arr.forEach((it) => {
+          const c = it.category || '';
+          if (c) catSet[c] = (catSet[c] || 0) + 1;
+        });
+        const derived = Object.keys(catSet).map((name) => ({
+          name,
+          description: '',
+          href: `/?cat=${encodeURIComponent(name)}`,
+        }));
+        if (derived.length > 0) setCats(derived);
+      } catch {}
+    }
+    load();
+  }, []);
+
+  if (cats.length === 0) return null;
+
   return (
     <section className="border-y border-ink/8 bg-blanc px-6 py-20">
       <div className="mx-auto max-w-5xl">
@@ -20,7 +47,7 @@ export default function Categories() {
         </div>
 
         <div className="grid grid-cols-1 gap-px bg-ink/10 sm:grid-cols-3">
-          {CATEGORIES.map((category) => (
+          {cats.map((category) => (
             <RippleLink key={category.name} href={category.href} name={category.name} description={category.description} t={t} />
           ))}
         </div>

@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
-import { carouselPieces } from "../../lib/landing-data";
 import { useTranslation } from "../../lib/i18n/context";
 import JewelryModal from "./JewelryModal";
 
 /**
  * Carousel.jsx - Marie Gabison Paris
  * Editorial carousel with touch/swipe support and auto-rotation pause.
+ * Fetches carousel items dynamically from /api/catalog (carousel === true).
  */
 const AUTO_INTERVAL = 5500; // auto-rotation interval (ms)
 
@@ -17,12 +17,44 @@ export default function Carousel() {
   const [selected, setSelected] = useState(null);
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
-  const pieces = carouselPieces;
+  const [pieces, setPieces] = useState([]);
+  const fetchedRef = useRef(false);
 
   const touchStartXRef = useRef(null);
   const touchStartYRef = useRef(null);
   const isSwipingRef = useRef(false);
   const isDraggingRef = useRef(false);
+
+  // ─── Fetch carousel items from catalog API ───
+  useEffect(() => {
+    if (fetchedRef.current) return;
+    fetchedRef.current = true;
+    async function load() {
+      try {
+        const res = await fetch('/api/catalog', { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = await res.json();
+        const arr = Array.isArray(data) ? data : data.data || data.items || [];
+        const carouselItems = arr
+          .filter((it) => it.carousel === true)
+          .map((it) => ({
+            id: it.id || it.title,
+            name: it.title || it.name || '',
+            category: it.category || '',
+            description: it.description || '',
+            image: it.imageUrl || it.image || '',
+            edition: 'Modèle unique',
+            price: it.price ? String(it.price) + ' €' : 'Sur demande',
+            details: [],
+            material: '',
+          }));
+        if (carouselItems.length > 0) setPieces(carouselItems);
+      } catch (e) {
+        // keep empty pieces
+      }
+    }
+    load();
+  }, []);
 
   // ─── Auto-rotation (resets its timer after each slide change or manual interaction) ───
   useEffect(() => {
@@ -102,6 +134,8 @@ export default function Carousel() {
     ? (dragOffset / (typeof window !== "undefined" ? window.innerWidth : 1000)) * 100
     : 0;
   const translateX = baseTranslate + dragPercent;
+
+  if (pieces.length === 0) return null;
 
   return (
     <>

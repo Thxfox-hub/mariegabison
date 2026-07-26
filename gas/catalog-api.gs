@@ -126,6 +126,15 @@ function buildItems_() {
 
     if (!isFilled_(title) && !isFilled_(price) && !isFilled_(description)) return;
 
+    // Read carousel and visible flags (default true if column absent)
+    const carouselRaw = cell_(row, fields.carousel);
+    const visibleRaw = cell_(row, fields.visible);
+    const carousel = fields.carousel !== undefined ? parseBool_(carouselRaw) : false;
+    const visible = fields.visible !== undefined ? parseBool_(visibleRaw) : true;
+
+    // Skip hidden items in public catalog
+    if (!visible) return;
+
     categoriesSet[category] = true;
 
     items.push({
@@ -135,7 +144,9 @@ function buildItems_() {
       category: category,
       description: String(description || ''),
       imageUrl: images.length ? images[0] : undefined,
-      images: images.length ? images : undefined
+      images: images.length ? images : undefined,
+      carousel: carousel,
+      visible: visible
     });
   });
 
@@ -169,7 +180,9 @@ function parseHeader_(headers) {
     'type': 'category', 'category': 'category', 'categorie': 'category',
     'prix': 'price', 'price': 'price',
     'images': 'image', 'image': 'image', 'photo': 'image', 'photos': 'image', 'img': 'image', 'imageurl': 'image',
-    'description': 'description', 'desc': 'description'
+    'description': 'description', 'desc': 'description',
+    'carousel': 'carousel',
+    'visible': 'visible', 'afficher': 'visible', 'publie': 'visible'
   };
 
   const fields = {};
@@ -425,6 +438,13 @@ function isFilled_(x) {
   if (x === null || x === undefined) return false;
   if (typeof x === 'number') return true;
   return String(x).trim() !== '';
+}
+
+function parseBool_(v) {
+  if (v === true || v === 1) return true;
+  if (v === false || v === 0) return false;
+  const s = String(v || '').trim().toLowerCase();
+  return s === 'true' || s === '1' || s === 'oui' || s === 'yes' || s === 'vrai' || s === 'x';
 }
 
 // ─── POST: route vers le stock app (addProduct, addCollection, updateCollection) ───

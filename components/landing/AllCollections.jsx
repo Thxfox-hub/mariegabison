@@ -1,10 +1,26 @@
 "use client";
 
-import { maisonCollections } from "../../lib/landing-data";
+import { useEffect, useState } from "react";
 import { useTranslation } from "../../lib/i18n/context";
 
 export default function AllCollections() {
   const { t } = useTranslation();
+  const [collections, setCollections] = useState([]);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const res = await fetch('/api/collections', { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (Array.isArray(data)) setCollections(data);
+      } catch {}
+    }
+    load();
+  }, []);
+
+  if (collections.length === 0) return null;
+
   return (
     <section id="collections" className="px-6 py-24">
       <div className="mx-auto max-w-6xl">
@@ -21,7 +37,7 @@ export default function AllCollections() {
         </div>
 
         <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
-          {maisonCollections.map((collection, index) => (
+          {collections.map((collection, index) => (
             <article
               key={collection.id}
               className="group flex flex-col border border-ink/10 bg-blanc p-8 transition duration-500 hover:border-ink/30 animate-fade-up"
@@ -36,23 +52,11 @@ export default function AllCollections() {
               <p className="mt-5 flex-1 font-sans text-[13px] font-light leading-[1.8] text-ink-soft">
                 {collection.description}
               </p>
-              <div className="mt-6 flex flex-wrap gap-2">
-                {collection.categories.map((cat) => (
-                  <span
-                    key={cat}
-                    className="border border-ink/10 px-2.5 py-1 font-sans text-[9px] font-light uppercase tracking-[0.18em] text-ink-soft"
-                  >
-                    {cat}
-                  </span>
-                ))}
-              </div>
               <a
-                href={collection.id === "one-day-only" ? "#collection" : "#contact"}
+                href="#collection"
                 className="mt-8 inline-flex w-fit items-center gap-2 font-sans text-[10px] font-light uppercase tracking-[0.28em] text-ink transition group-hover:gap-3"
               >
-                {collection.id === "sur-mesure"
-                  ? t('landing.parisAppointment')
-                  : t('landing.discoverAcquire')}
+                {t('landing.discoverAcquire')}
                 <span aria-hidden>→</span>
               </a>
             </article>

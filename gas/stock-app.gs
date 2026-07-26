@@ -105,6 +105,9 @@ function getStock() {
       var imageUrls = [];
       try { imageUrls = resolveImages_(rawImages); } catch (e) { imageUrls = []; }
 
+      var carouselRaw = fields.carousel !== undefined ? cellStock_(row, fields.carousel) : '';
+      var visibleRaw = fields.visible !== undefined ? cellStock_(row, fields.visible) : '';
+
       items.push({
         rowIndex: i + 1,
         title: String(title || ''),
@@ -114,7 +117,9 @@ function getStock() {
         images: imageUrls,
         imageUrl: imageUrls.length ? imageUrls[0] : '',
         category: normalizeCategoryStock_(type),
-        collection: colIdx >= 0 ? String(row[colIdx] || '') : ''
+        collection: colIdx >= 0 ? String(row[colIdx] || '') : '',
+        carousel: parseBoolStock_(carouselRaw),
+        visible: fields.visible !== undefined ? parseBoolStock_(visibleRaw) : true
       });
     }
 
@@ -175,6 +180,24 @@ function addProduct(e) {
     if (fields.description !== undefined) row[fields.description] = body.description || '';
     if (fields.image !== undefined) row[fields.image] = imageUrls.join(', ');
     row[colIdx] = body.collection || '';
+
+    // Ensure Carousel and Visible columns exist
+    if (fields.carousel === undefined) {
+      var lastCol2 = sh.getLastColumn();
+      sh.getRange(1, lastCol2 + 1).setValue('Carousel');
+      fields.carousel = lastCol2;
+      header.push('Carousel');
+      row.push('');
+    }
+    if (fields.visible === undefined) {
+      var lastCol3 = sh.getLastColumn();
+      sh.getRange(1, lastCol3 + 1).setValue('Visible');
+      fields.visible = lastCol3;
+      header.push('Visible');
+      row.push('');
+    }
+    row[fields.carousel] = body.carousel === true ? true : false;
+    row[fields.visible] = body.visible === false ? false : true;
 
     // Ajouter un horodateur si la colonne existe
     var tsIdx = findColumnIndex_(header, 'horodateur');
@@ -246,6 +269,28 @@ function updateProduct(e) {
       updated.push('collection');
     }
 
+    // Ensure Carousel and Visible columns exist, then update
+    if (body.carousel !== undefined || body.visible !== undefined) {
+      if (fields.carousel === undefined) {
+        var nc1 = sh.getLastColumn();
+        sh.getRange(1, nc1 + 1).setValue('Carousel');
+        fields.carousel = nc1;
+      }
+      if (fields.visible === undefined) {
+        var nc2 = sh.getLastColumn();
+        sh.getRange(1, nc2 + 1).setValue('Visible');
+        fields.visible = nc2;
+      }
+    }
+    if (body.carousel !== undefined) {
+      sh.getRange(rowIdx, fields.carousel + 1).setValue(body.carousel);
+      updated.push('carousel');
+    }
+    if (body.visible !== undefined) {
+      sh.getRange(rowIdx, fields.visible + 1).setValue(body.visible);
+      updated.push('visible');
+    }
+
     if (body.images !== undefined && fields.image !== undefined) {
       if (body.images.length > 5) return { error: 'Maximum 5 images' };
       var folder = getOrCreateDriveFolder_();
@@ -284,20 +329,29 @@ function getCollections() {
     if (!sh) {
       // Créer le sheet s'il n'existe pas
       sh = ss.insertSheet(COLLECTIONS_SHEET_NAME);
-      sh.appendRow(['Nom', 'Description', 'Date création']);
+      sh.appendRow(['Nom', 'Description', 'Date création', 'Visible']);
       return { items: [] };
     }
     var values = sh.getDataRange().getValues();
     if (values.length < 2) return { items: [] };
 
+    // Detect visible column (4th column if present)
+    var hasVisibleCol = values[0].length >= 4 && String(values[0][3] || '').trim().toLowerCase() === 'visible';
+
     var items = [];
     for (var i = 1; i < values.length; i++) {
       if (!values[i][0]) continue;
+      var visible = true;
+      if (hasVisibleCol) {
+        var v = values[i][3];
+        visible = (v === true || v === 1 || String(v || '').trim().toLowerCase() === 'true' || String(v || '').trim().toLowerCase() === 'oui' || String(v || '').trim().toLowerCase() === '1' || String(v || '').trim().toLowerCase() === 'x');
+      }
       items.push({
         rowIndex: i + 1,
         name: String(values[i][0]),
         description: String(values[i][1] || ''),
-        createdAt: values[i][2] ? new Date(values[i][2]).toISOString() : ''
+        createdAt: values[i][2] ? new Date(values[i][2]).toISOString() : '',
+        visible: visible
       });
     }
     return { items: items };
@@ -318,7 +372,7 @@ function addCollection(e) {
     var sh = ss.getSheetByName(COLLECTIONS_SHEET_NAME);
     if (!sh) {
       sh = ss.insertSheet(COLLECTIONS_SHEET_NAME);
-      sh.appendRow(['Nom', 'Description', 'Date création']);
+      sh.appendRow(['Nom', 'Description', 'Date création', 'Visible']);
     }
 
     // Vérifier doublon
@@ -329,7 +383,7 @@ function addCollection(e) {
       }
     }
 
-    sh.appendRow([body.name.trim(), body.description || '', new Date()]);
+    sh.appendRow([body.name.trim(), body.description || '', new Date(), body.visible === false ? false : true]);
     return { success: true, rowIndex: sh.getLastRow() };
   } catch (err) {
     return { error: String(err && err.message || err) };
@@ -352,6 +406,15 @@ function updateCollection(e) {
 
     if (body.name) sh.getRange(body.rowIndex, 1).setValue(body.name.trim());
     if (body.description !== undefined) sh.getRange(body.rowIndex, 2).setValue(body.description);
+    if (body.visible !== undefined) {
+      // Ensure Visible column exists
+      var header = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0];
+      var hasVisCol = header.length >= 4 && String(header[3] || '').trim().toLowerCase() === 'visible';
+      if (!hasVisCol) {
+        sh.getRange(1, 4).setValue('Visible');
+      }
+      sh.getRange(body.rowIndex, 4).setValue(body.visible);
+    }
 
     return { success: true };
   } catch (err) {
@@ -436,7 +499,9 @@ function parseHeaderStock_(headers) {
     'prix': 'price', 'price': 'price',
     'images': 'image', 'image': 'image', 'photo': 'image', 'photos': 'image', 'img': 'image', 'imageurl': 'image',
     'description': 'description', 'desc': 'description',
-    'horodateur': 'horodateur', 'timestamp': 'horodateur'
+    'horodateur': 'horodateur', 'timestamp': 'horodateur',
+    'carousel': 'carousel',
+    'visible': 'visible', 'afficher': 'visible', 'publie': 'visible'
   };
   var fields = {};
   for (var c = 0; c < headers.length; c++) {
@@ -473,4 +538,11 @@ function isFilledStock_(x) {
   if (x === null || x === undefined) return false;
   if (typeof x === 'number') return true;
   return String(x).trim() !== '';
+}
+
+function parseBoolStock_(v) {
+  if (v === true || v === 1) return true;
+  if (v === false || v === 0) return false;
+  var s = String(v || '').trim().toLowerCase();
+  return s === 'true' || s === '1' || s === 'oui' || s === 'yes' || s === 'vrai' || s === 'x';
 }
